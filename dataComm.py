@@ -79,7 +79,6 @@ def extractVideoFrames(inputVideoPath, outFramesPath, saveFileOrDict):
     while True:
       
       ret, img = cap.read()
-      print ("type img: ", type(img))
 
       if saveFileOrDict == "file":
           cv2.imwrite(os.path.join(outFramesPath, '%d.jpg') % count, img)     # save frame as JPEG file
@@ -92,7 +91,6 @@ def extractVideoFrames(inputVideoPath, outFramesPath, saveFileOrDict):
 
       count += 1
   
-    
     if saveFileOrDict == "file":
         return None
     elif saveFileOrDict == "dict":

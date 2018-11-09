@@ -85,19 +85,19 @@ class HOGCompute:
                 #HOGPH = normalize(HOGPH)
 
                 if (BigCount == 1):
-                    bigArray = np.copy(HOGPH)
+                    bigHOGArray = np.copy(HOGPH)
                 else:
-                    bigArray = np.vstack((bigArray, HOGPH))
+                    bigHOGArray = np.vstack((bigHOGArray, HOGPH))
                 BigCount += 1
 
                 index +=1        #nInterval   #1        #  nInterval
 
-            print ("Shape of Big array is: ", bigArray.shape)
-            predictResLst = clf.predict(bigArray)
+            print ("Shape of Big array is: ", bigHOGArray.shape)
+            predictResLst = clf.predict(bigHOGArray)
             print ("predictResult: ", predictResLst)
             
             self.outputToVideo(FilePath + FileName, nInterval,  predictResLst)
-            most_common,num_most_common = Counter(clf.predict(bigArray)).most_common(1)[0]
+            most_common,num_most_common = Counter(clf.predict(bigHOGArray)).most_common(1)[0]
             print ("Video Action is: ",self.DisplayAction(most_common))
             
             print("time: elapsed: ", time.time()- startTime)
@@ -135,7 +135,6 @@ class HOGCompute:
         padding = (8,8)
         locations = ((10,20),)
 
-        nInterval = 6 # 10
         BigCount = 1
 
         IMGSIZE  = 300
@@ -144,6 +143,8 @@ class HOGCompute:
         print ("len(imageDict) : ", len(imageDict))
         
         startTime = time.time()
+        
+        bigHOGArray = None
         
         while(index < len(imageDict)-K):
             hogCount = 0
@@ -156,7 +157,7 @@ class HOGCompute:
 
 
                 if(hogCount == 0):
-                    hogTemp = np.zeros((nInterval, len(temp[0])))
+                    hogTemp = np.zeros((K, len(temp[0])))
                     #print ("Shape of hogTemp is: ", hogTemp.shape)
                     hogTemp[hogCount]= temp[0]
                     if (FirstEntryFlag == False):
@@ -172,23 +173,27 @@ class HOGCompute:
             #HOGPH = normalize(HOGPH)
 
             if (BigCount == 1):
-                bigArray = np.copy(HOGPH)
+                bigHOGArray = np.copy(HOGPH)
             else:
-                bigArray = np.vstack((bigArray, HOGPH))
+                bigHOGArray = np.vstack((bigHOGArray, HOGPH))
             BigCount += 1
 
-            index +=1        #nInterval   #1        #  nInterval
+            index +=1        #K   #1        #  K
 
-        print ("Shape of Big array is: ", bigArray.shape)
-        predictResLst = clf.predict(bigArray)
+        if bigHOGArray is None:
+            print ("Shape of Big HOG Array is None: ")
+            return 
+        
+        print ("Shape of Big array is: ", bigHOGArray.shape)
+        predictResLst = clf.predict(bigHOGArray)
         print ("predictResult: ", predictResLst)
 
-        print ("Shape of Big array is: ", bigArray.shape)
-        predictResLst = clf.predict(bigArray)
+        print ("Shape of Big array is: ", bigHOGArray.shape)
+        predictResLst = clf.predict(bigHOGArray)
         print ("predictResult: ", predictResLst)
         
         self.outputImageDictToVideo(outVideoPath, imageDict,  K,  predictResLst)
-        most_common,num_most_common = Counter(clf.predict(bigArray)).most_common(1)[0]
+        most_common,num_most_common = Counter(clf.predict(bigHOGArray)).most_common(1)[0]
         print ("Video Action is: ",self.DisplayAction(most_common))
         
         print("time: elapsed: ", time.time()- startTime)
@@ -204,8 +209,7 @@ class HOGCompute:
         fourcc = cv2.VideoWriter_fourcc(*'XVID')   # MJPG
         #outputVideoDir = os.path.join( os.path.dirname(__file__), '../output/')
         
-        img0 = cv2.imread(imageDict[1])
-        HEIGHT , WIDTH , LAYER =  img0.shape
+        HEIGHT , WIDTH , LAYER =  imageDict[1].shape
 
         outVideo = cv2.VideoWriter(outVideoPath, fourcc, 5,  (int(WIDTH), int(HEIGHT)))
         
@@ -314,7 +318,7 @@ class HOGCompute:
 if __name__=='__main__':
     
     # logging setting
-    outLogPath = r'../inputOutputData/logging.csv'
+    outLogPath = r'../output/logging.csv'
     logLevel = logging.WARNING       # logging.DEBUG
     loggingSetting(outLogPath, logLevel)
     
