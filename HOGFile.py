@@ -2,21 +2,17 @@ import numpy as np
 import os
 import glob
 import cv2
-import random
 import pickle
-from sklearn.preprocessing import normalize
 from sklearn.decomposition import PCA
 from sklearn import svm
 import time
-from PIL import Image
-from resizeimage import resizeimage
 
 class HOGCompute:
     def __init__(self):
 
-        FilePath =   "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/running/training/"  # 'TrainingNew/'
+        FilePath =   "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/runningWalking/training/"  # 'TrainingNew/'
         Folders = sorted(os.listdir(FilePath))
-        LabelCount = 2
+        LabelCount = 1
         FolderCheck = False
         Labels = np.array([])
 
@@ -54,7 +50,7 @@ class HOGCompute:
 
                 FirstEntryFlag = False
 
-                print ("len(images) : ", len(images), images)
+                print ("len(images) : ", VideoEntry, len(images))
                 while(index < len(images)-nInterval):
                     hogCount = 0
                     for i in range(index,(index + nInterval)):
@@ -99,7 +95,7 @@ class HOGCompute:
 
 
 
-                    index += nInterval
+                    index +=1   # nInterval
                     #print "Index value is: ", index
 
                 if (FolderCheck == False):

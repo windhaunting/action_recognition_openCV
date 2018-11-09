@@ -12,12 +12,14 @@ from collections import Counter
 
 class HOGCompute:
     def __init__(self):
-        FilePath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/running/testing/"  #  'Test/'
+        FilePath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/runningWalking/testing/"  #  'Test/'
         Folders = os.listdir(FilePath)
 
         with open('my_SVM_file.pkl', 'rb') as fid:
             clf = pickle.load(fid)
 
+        startTime = time.time()
+        
         for FileName in Folders:
             images =   glob.glob(FilePath + FileName + '/*.jpg')   #self.sort_files(FilePath + FileName)
 
@@ -43,7 +45,7 @@ class HOGCompute:
 
             index = 1
             FirstEntryFlag = False
-            print ("len(images) : ", len(images), images)
+            print ("len(images) : ", len(images))
             while(index < len(images)-nInterval):
                 hogCount = 0
                 for i in range(index,(index + nInterval)):
@@ -57,7 +59,7 @@ class HOGCompute:
 
                     if(hogCount == 0):
                         hogTemp = np.zeros((nInterval, len(temp[0])))
-                        #print "Shape of hogTemp is: ", hogTemp.shape
+                        #print ("Shape of hogTemp is: ", hogTemp.shape)
                         hogTemp[hogCount]= temp[0]
                         if (FirstEntryFlag == False):
                             FirstHOGEntry = np.copy(temp)
@@ -65,7 +67,7 @@ class HOGCompute:
                     else:
                         hogTemp[hogCount]= temp
 
-                    #print "Shape of hogTemp is: ", hogTemp.shape
+                    #print ("Shape of hogTemp is: ", hogTemp.shape)
                     hogCount += 1
 
                 HOGPH = self.computeHOGPH(hogTemp, FirstHOGEntry)
@@ -77,15 +79,55 @@ class HOGCompute:
                     bigArray = np.vstack((bigArray, HOGPH))
                 BigCount += 1
 
-                index += nInterval
+                index +=1        #nInterval   #1        #  nInterval
 
             print ("Shape of Big array is: ", bigArray.shape)
-            print (clf.predict(bigArray))
+            predictResLst = clf.predict(bigArray)
+            print ("predictResult: ", predictResLst)
+            
+            self.outputToVideo(FilePath + FileName, nInterval,  predictResLst)
             most_common,num_most_common = Counter(clf.predict(bigArray)).most_common(1)[0]
-            print ("Action is: ",self.DisplayAction(most_common))
+            print ("Video Action is: ",self.DisplayAction(most_common))
+            
+            print("time: elapsed: ", time.time()- startTime)
             #self.WriteAction(self.DisplayAction(most_common))
 
 
+    def outputToVideo(self, FilePathDir, K,  predictResLst):
+        '''
+        sliding window K
+        '''
+        framePathLst =   glob.glob(FilePathDir + '/*.jpg')   #self.sort_files(FilePath + FileName)
+
+
+        index = 1
+        print ("len framePathLst, predictResLst: ", len(framePathLst), len(predictResLst))
+        
+        outputVideoName = "humanRunning_KTH_output_001.avi"
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')   # MJPG
+        outputVideoDir = os.path.join( os.path.dirname(__file__), '../output/')
+        img0 = cv2.imread(FilePathDir +"/" + "frame_1.jpg")
+        HEIGHT , WIDTH , LAYER =  img0.shape
+
+        outVideo = cv2.VideoWriter(outputVideoDir + outputVideoName, fourcc, 5,  (int(WIDTH), int(HEIGHT)))
+    
+        while(index < len(predictResLst)):  #len(framePathLst)-K):
+            imgPath = FilePathDir +"/" + "frame_" + str(index) + ".jpg"
+            img = cv2.imread(imgPath)
+
+                 # write label into output video
+            label_txt_action = self.DisplayAction(predictResLst[index])
+            cv2.putText(img, label_txt_action, (int(WIDTH/2), int(HEIGHT/2)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 6) # Text in black
+            
+            #print ("index: ", index, imgPath)
+            outVideo.write(img)
+            
+            index += 1
+            
+        outVideo.release()
+        cv2.destroyAllWindows()
+    
+    
     def computePCA(self,array):
         pca = PCA()
         newData = pca.fit_transform(array)
@@ -102,12 +144,12 @@ class HOGCompute:
 
     def DisplayAction(self,actionIndex):
         Action = "Unknown"
-        if(actionIndex == 1):
-            Action = "Handwaving"
-        elif(actionIndex== 2):
+        if(actionIndex== 1):
             Action = "Running"
-        elif(actionIndex == 3):
+        elif(actionIndex == 2):
             Action = "Walking"
+        elif(actionIndex == 3):
+            Action = "Handwaving"
         return Action
 
     def WriteAction(self, string):
