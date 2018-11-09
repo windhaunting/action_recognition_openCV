@@ -11,6 +11,7 @@ import os
 import cv2
 import logging
 from sys import stdout
+from collections import defaultdict
 
 
 def loggingSetting(outLogPath, logLevel):
@@ -44,15 +45,21 @@ def loggingSetting(outLogPath, logLevel):
 
 
 def readVideo(inputVideoPath):
+    '''
+    read a video
+    '''
+    
     cap = cv2.VideoCapture(inputVideoPath)      # 0 to camera in the file
 
     return cap
 
 
 
-def extractVideoFrames(inputVideoPath, outFramesPath):
+def extractVideoFrames(inputVideoPath, outFramesPath, saveFileOrDict):
     '''
     extracframes from a video
+    and save into file or dictionary
+    
     '''
     cap = readVideo(inputVideoPath)
     
@@ -68,12 +75,17 @@ def extractVideoFrames(inputVideoPath, outFramesPath):
     print('cam stat: ', FPS, WIDTH, HEIGHT, NUMFRAMES)
     
     count = 1
-
+    imageDict = defaultdict(int)
     while True:
       
       ret, img = cap.read()
-      cv2.imwrite(os.path.join(outFramesPath, '%d.jpg') % count, img)     # save frame as JPEG file
-      
+      print ("type img: ", type(img))
+
+      if saveFileOrDict == "file":
+          cv2.imwrite(os.path.join(outFramesPath, '%d.jpg') % count, img)     # save frame as JPEG file
+      elif saveFileOrDict == "dict":
+          imageDict[count] = img
+          
       if not ret:
           print ("no frame exit here 1, total frames ")
           break
@@ -81,6 +93,12 @@ def extractVideoFrames(inputVideoPath, outFramesPath):
       count += 1
   
     
+    if saveFileOrDict == "file":
+        return None
+    elif saveFileOrDict == "dict":
+        return imageDict
+    
+ 
 if __name__== "__main__":
 
     inputVideoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/test1-ObjectDetection/inputOutputData/inputData/videos/cats/running/running_01/cat_running_01.mp4"

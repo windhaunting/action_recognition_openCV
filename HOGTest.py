@@ -9,9 +9,20 @@ from sklearn.decomposition import PCA
 from sklearn import svm
 import time
 from collections import Counter
+import logging
+import argparse
+
+from dataComm import extractVideoFrames
+from dataComm import loggingSetting
+
+
 
 class HOGCompute:
+    
     def __init__(self):
+        pass
+
+    def recognizeActionFromFrames(self, framesPathDir):
         FilePath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/runningWalking/testing/"  #  'Test/'
         Folders = os.listdir(FilePath)
 
@@ -93,8 +104,131 @@ class HOGCompute:
             #self.WriteAction(self.DisplayAction(most_common))
 
 
-    def outputToVideo(self, FilePathDir, K,  predictResLst):
+    def recognizeActionFromVideo(self, inputVideoPath, outVideoPath, K):
         '''
+        read from a video 
+        output: a detected video
+        sliding window K size
+        '''
+        
+        imageDict = extractVideoFrames(inputVideoPath, "", "dict")  # store read image array
+        
+        
+        with open('my_SVM_file.pkl', 'rb') as fid:
+            clf = pickle.load(fid)
+
+
+        winSize = (128,64)
+        blockSize = (16,16)
+        blockStride = (8,8)
+        cellSize = (8,8)
+        nbins = 9
+        derivAperture = 0
+        winSigma = -1
+        histogramNormType = 0
+        L2HysThreshold = 2.0000000000000001e-01
+        gammaCorrection = 0
+        nlevels = 64
+        hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,
+                                histogramNormType,L2HysThreshold,gammaCorrection,nlevels)
+        winStride = (8,8)
+        padding = (8,8)
+        locations = ((10,20),)
+
+        nInterval = 6 # 10
+        BigCount = 1
+
+        IMGSIZE  = 300
+        index = 1
+        FirstEntryFlag = False
+        print ("len(imageDict) : ", len(imageDict))
+        
+        startTime = time.time()
+        
+        while(index < len(imageDict)-K):
+            hogCount = 0
+            for i in range(index,(index + K)):
+                img = imageDict[index]         # imge array
+                imgScale = cv2.resize(img, (IMGSIZE, IMGSIZE), interpolation=cv2.INTER_LINEAR)
+                
+                h1 = hog.compute(imgScale,winStride,padding,locations).T
+                temp = np.copy(h1)
+
+
+                if(hogCount == 0):
+                    hogTemp = np.zeros((nInterval, len(temp[0])))
+                    #print ("Shape of hogTemp is: ", hogTemp.shape)
+                    hogTemp[hogCount]= temp[0]
+                    if (FirstEntryFlag == False):
+                        FirstHOGEntry = np.copy(temp)
+                        FirstEntryFlag = True
+                else:
+                    hogTemp[hogCount]= temp
+
+                #print ("Shape of hogTemp is: ", hogTemp.shape)
+                hogCount += 1
+
+            HOGPH = self.computeHOGPH(hogTemp, FirstHOGEntry)
+            #HOGPH = normalize(HOGPH)
+
+            if (BigCount == 1):
+                bigArray = np.copy(HOGPH)
+            else:
+                bigArray = np.vstack((bigArray, HOGPH))
+            BigCount += 1
+
+            index +=1        #nInterval   #1        #  nInterval
+
+        print ("Shape of Big array is: ", bigArray.shape)
+        predictResLst = clf.predict(bigArray)
+        print ("predictResult: ", predictResLst)
+
+        print ("Shape of Big array is: ", bigArray.shape)
+        predictResLst = clf.predict(bigArray)
+        print ("predictResult: ", predictResLst)
+        
+        self.outputImageDictToVideo(outVideoPath, imageDict,  K,  predictResLst)
+        most_common,num_most_common = Counter(clf.predict(bigArray)).most_common(1)[0]
+        print ("Video Action is: ",self.DisplayAction(most_common))
+        
+        print("time: elapsed: ", time.time()- startTime)
+            
+    
+    def outputImageDictToVideo(self, outVideoPath, imageDict, K, predictResLst):
+        '''
+        read from imageDict
+        output Video
+        '''
+        #cv2.imwrite(os.path.join(outFramesPath, '%d.jpg') % count, img)     # save frame as JPEG file
+
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')   # MJPG
+        #outputVideoDir = os.path.join( os.path.dirname(__file__), '../output/')
+        
+        img0 = cv2.imread(imageDict[1])
+        HEIGHT , WIDTH , LAYER =  img0.shape
+
+        outVideo = cv2.VideoWriter(outVideoPath, fourcc, 5,  (int(WIDTH), int(HEIGHT)))
+        
+        index = 1
+        while(index < len(predictResLst)):  #len(framePathLst)-K):
+            
+            img = imageDict[index]
+            # write label into output video
+            label_txt_action = self.DisplayAction(predictResLst[index])
+            cv2.putText(img, label_txt_action, (int(WIDTH/2), int(HEIGHT/2)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 6) # Text in black
+            
+            #print ("index: ", index, imgPath)
+            outVideo.write(img)
+            
+            index += 1
+            
+        outVideo.release()
+        cv2.destroyAllWindows()
+        
+            
+    def outputFrameToVideo(self, FilePathDir, K,  predictResLst):
+        '''
+        read detected result and frames image in FilePathDir
         sliding window K
         '''
         framePathLst =   glob.glob(FilePathDir + '/*.jpg')   #self.sort_files(FilePath + FileName)
@@ -127,6 +261,8 @@ class HOGCompute:
         outVideo.release()
         cv2.destroyAllWindows()
     
+    
+        
     
     def computePCA(self,array):
         pca = PCA()
@@ -176,6 +312,20 @@ class HOGCompute:
         return(sorted(self.fname))
 
 if __name__=='__main__':
-    start_time = time.time()
-    h= HOGCompute()
-    print("--- %s seconds ---" % (time.time() - start_time))
+    
+    # logging setting
+    outLogPath = r'../inputOutputData/logging.csv'
+    logLevel = logging.WARNING       # logging.DEBUG
+    loggingSetting(outLogPath, logLevel)
+    
+    hogObj = HOGCompute()
+    
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-v", "--video", type=str, help="path to input video file")
+    ap.add_argument("-o", "--output", type=str, help="path to out new video file")
+    args = vars(ap.parse_args())
+
+    K = 6
+    hogObj.recognizeActionFromVideo(args["video"], args['output'], K)
+    
+
