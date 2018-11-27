@@ -18,29 +18,21 @@ def loggingSetting(outLogPath, logLevel):
     '''
     set logging level
     '''
-    '''
-    #logging.getLogger().setLevel(logging.DEBUG)
     logger = logging.getLogger(__name__)
-    logger.setLevel(logLevel)
+    logger.setLevel(logging.INFO)
+        
+    # create a file handler
+    handler = logging.FileHandler(outLogPath)
+    handler.setLevel(logLevel)
     
-    # create console handler and set level to debug
-    ch = logging.StreamHandler()
-    ch.setLevel(logLevel)
-    # create formatter
+    # create a logging format
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # add formatter to ch
-    ch.setFormatter(formatter)
-    # add ch to logger
-    logger.addHandler(ch)
+    handler.setFormatter(formatter)
+    
+    # add the handlers to the logger
+    logger.addHandler(handler)
 
-    fh = logging.FileHandler(outLogPath)
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-    '''
-    
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handlers = [logging.FileHandler(outLogPath), logging.StreamHandler(stdout)]
-    logging.basicConfig(level = logLevel, format = formatter, handlers = handlers)
+    return logger
     
 
 
