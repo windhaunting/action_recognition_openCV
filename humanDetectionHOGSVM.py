@@ -33,8 +33,7 @@ def draw_circles(storage, output):
         cv2.Circle(output, (x, y), Radius, cv2.RGB(255, 0, 0), 3, 8, 0)
 
 
-
-
+    
 def findContour(inputImage, outputImage):
     
     '''
@@ -253,7 +252,9 @@ def testImage(inputImage, outputImage):
     
     cv.imwrite('found_basketball.jpg',orig)
     '''
- 
+    
+
+    
     
 def detectHuman(videoPath, outputVideoName):
     '''
@@ -414,7 +415,67 @@ def detectHuman(videoPath, outputVideoName):
     outVideo.release()
 
 
+def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
+    '''
+    inputRegions is a rectangle
+    '''
+    
+    
+    rectImg = frame[yA:yB, xA:xB]
+
+
+    bilateral_filtered_image = cv2.bilateralFilter(rectImg, 5, 175, 175)
+    #cv2.imshow('Bilateral', bilateral_filtered_image)
+    #cv2.waitKey(0)
+    
+    edge_detected_image = cv2.Canny(bilateral_filtered_image, 75, 200)
+    cv2.imshow('Edge', edge_detected_image)
+    #cv2.waitKey(0)
+    
+    contours, hierarchy = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # for basket  .03** cv2.arcLength(contour, False)  ((len(approx) >=10) & (area > 100) ):
+    # for basketball 
+    contour_list = []
+    for contour in contours:
+        #perfect circle area
+        perfectCircleArea = math.pi* (cv2.arcLength(contour, False)//2)**2
+        
+        epsilon = .1 * cv2.arcLength(contour, False)
+        approx = cv2.approxPolyDP(contour,epsilon, False)
+        area = cv2.contourArea(contour)
+        
+        #if area == 0:
+        #    continue
+        #if abs(perfectCircleArea-area)< 0.9:
+        #    contour_list.append(contour)
+        #print ("area: ", len(approx))
+        (x,y),radius = cv2.minEnclosingCircle(contour)
+        center = (int(x),int(y))
+        radius = int(radius)
+        #cv2.circle(frame,center,radius,(0,255,0),2)
+    
+        if ((len(approx) ==12) & (area > 10) ):
+            contour_list.append(contour)
+            print ("perfectCircleArea: ", approx, len(approx), area)
+           
+    if len(contour_list) == 0:
+        print ("BASKETBALL detected frame ", startFrame)
+
+        cv2.drawContours(rectImg, contour_list,  -1, (255,0,0), 2)
+        frameOutFile = outDir + 'baskteBall_' + str(startFrame) + '_' + str(xA) + '-' + str(yA) + '.jpg'
+        if not os.path.exists(frameOutFile):
+            cv2.imwrite(frameOutFile, rectImg)
+    else:
+        print ("no basketball detected frame ", startFrame)
+
+    
+            
+
 def detectBasketDunk(videoPath, outputVideoName):
+    '''
+    detect basketball dunk
+    '''
     
     print ("videoPath, model path: ", videoPath)
     
@@ -472,22 +533,31 @@ def detectBasketDunk(videoPath, outputVideoName):
         # fairly large overlap threshold to try to maintain overlapping
         # boxes that are still people
         rects = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
-        pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
+        picks = non_max_suppression(rects, probs=None, overlapThresh=0.65)
          
         # draw the final bounding boxes
-        for (xA, yA, xB, yB) in pick:
+        for (xA, yA, xB, yB) in picks:
             cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
         
         frameOutFile = finalOutDir + 'basketDunkImg' + str(startFrame) + '.jpg'
         if not os.path.exists(frameOutFile):
             cv2.imwrite(frameOutFile, frame)
 
+
+        # detect basketball around extended human region
+        for (xA, yA, xB, yB) in picks:
+            cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
+            
+            #crop image
+            detectBall(frame, int(0.5*xA), int(0.5*yA), int(1.5*xB), int(1.5*yB), startFrame,  finalOutDir)
+            
         # Display the resulting frame
         cv2.imshow('Video out', frame)
         outVideo.write(frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+        
         
     # When everything is done, release the capture
     cap.release()
