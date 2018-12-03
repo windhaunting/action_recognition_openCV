@@ -24,16 +24,47 @@ from dataComm import loggingSetting
 from dataComm import readVideo
 
 
+def testImage(modelPath, inputImage):
+    
+    bodyCascade = cv2.CascadeClassifier(modelPath)
+    print (" model path: ", modelPath)
+    
 
+    frame = cv2.imread(inputImage)
+    cv2.imshow('Original Image', frame)
+
+    height, width, channels = frame.shape
+    print (width, height, channels)
+    
+    #imScale = cv2.resize(frame, (640,360)) # Downscale to improve frame rate
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    bodies = bodyCascade.detectMultiScale(
+        gray,
+        scaleFactor=1.05,
+        minNeighbors=5,
+        minSize=(30, 30),
+    )
+
+    # Draw a rectangle around the faces
+    for (x, y, w, h) in bodies:
+        print (" human detected: ")
+
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+    # Display the resulting frame
+    cv2.imshow('detectd human', frame)
+    cv2.waitKey(0)
+    
+    
 def detectHuman(modelPath, videoPath, outputVideoName):
     '''
     xml model pretrained 
     videoPath: input a vdideo
     
     '''
-    cascPath = modelPath
-    print ("videoPath, model path: ", videoPath,  cascPath)
-    faceCascade = cv2.CascadeClassifier(cascPath)
+    faceCascade = cv2.CascadeClassifier(modelPath)
+    print ("videoPath, model path: ", videoPath, modelPath)
     
     cap = readVideo(videoPath)
     

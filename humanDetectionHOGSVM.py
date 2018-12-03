@@ -18,8 +18,9 @@ import cv2
 import sys
 import os
 import imutils
-from collections import deque
+import math
 
+from collections import deque
 
 from dataComm import loggingSetting
 from dataComm import readVideo
@@ -32,20 +33,86 @@ def draw_circles(storage, output):
         cv2.Circle(output, (x, y), Radius, cv2.RGB(255, 0, 0), 3, 8, 0)
 
 
+
+
+def findContour(inputImage, outputImage):
+    
+    '''
+    1st detect human
+    2nd extend the detection region in a threshold (20%) larger
+    '''
+    frame = cv2.imread(inputImage)
+
+    cv2.imshow('Original Image', frame)
+    #cv2.waitKey(0)
+    
+    bilateral_filtered_image = cv2.bilateralFilter(frame, 5, 175, 175)
+    cv2.imshow('Bilateral', bilateral_filtered_image)
+    #cv2.waitKey(0)
+    
+    edge_detected_image = cv2.Canny(bilateral_filtered_image, 75, 200)
+    cv2.imshow('Edge', edge_detected_image)
+    #cv2.waitKey(0)
+    
+    contours, hierarchy = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # for basket  .03** cv2.arcLength(contour, False)  ((len(approx) >=10) & (area > 100) ):
+    # for basketball 
+    contour_list = []
+    for contour in contours:
+        #perfect circle area
+        perfectCircleArea = math.pi* (cv2.arcLength(contour, False)//2)**2
+        
+        epsilon = .1 * cv2.arcLength(contour, False)
+        approx = cv2.approxPolyDP(contour,epsilon, False)
+        area = cv2.contourArea(contour)
+        
+        #if area == 0:
+        #    continue
+        #if abs(perfectCircleArea-area)< 0.9:
+        #    contour_list.append(contour)
+        #print ("area: ", len(approx))
+        (x,y),radius = cv2.minEnclosingCircle(contour)
+        center = (int(x),int(y))
+        radius = int(radius)
+        #cv2.circle(frame,center,radius,(0,255,0),2)
+    
+        if ((len(approx) ==12) & (area > 150) ):
+            contour_list.append(contour)
+            print ("perfectCircleArea: ", approx, len(approx), area)
+           
+        
+    cv2.drawContours(frame, contour_list,  -1, (255,0,0), 2)
+    cv2.imshow('Objects Detected',frame)
+    cv2.waitKey(0)
+    
+    
 def testImage(inputImage, outputImage):
+    '''
+    test a single image
+    detect edge, color range, 
+    '''
     
     frame = cv2.imread(inputImage)
-    #print ("testImage ", frame)
+    height, width, channels = frame.shape
+    print (height, width, channels)
     
+    #image_resize = cv2.resize(frame, (640, 360)) 
+
+
+    #print ("testImage ", frame)
+    cv2.imshow('Original Image', frame)
+
     # first detect human
     hog = cv2.HOGDescriptor()
+    #hog.setSVMDetector(cv2.HOGDescriptor_getDaimlerPeopleDetector())
     hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
  
     # detect people in the image
-    (rects, weights) = hog.detectMultiScale(gray, winStride=(4, 4),
+    (rects, weights) = hog.detectMultiScale(gray, winStride=(3, 3),
     		padding=(8, 8), scale=1.05)
      
     # draw the original bounding boxes
@@ -61,21 +128,29 @@ def testImage(inputImage, outputImage):
     # draw the final bounding boxes
     for (xA, yA, xB, yB) in pick:
         cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
-            
-            
+    
+    
+        crop_img = frame[yA:yB, xA:xB]          # cropped image only containing detected human
+        cv2.imshow("cropped", crop_img)
+    
+    cv2.imshow('detected human image', frame)
+
+    
     # convert to HSV space
     im_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # take only the orange, highly saturated, and bright parts
-    im_hsv = cv2.inRange(im_hsv, (7,50,50), (11,1,255)) # (0,0,0), (255,255,255))   #(7,150,150), (11,255,255))
+    im_hsv = cv2.inRange(im_hsv, (7,50,50), (255,255,255)) # (0,0,0), (255,255,255))   #(7,150,150), (11,255,255))
     cv2.imshow("im_hsv", im_hsv)
-    cv2.imwrite("im_hsv.jpg", im_hsv)
-    
-    
+    cv2.imwrite(outputImage + "_im_hsv.jpg", im_hsv)
+
+    print ("extracted color range ")
+
     #detect circle
     out = frame.copy()
     im_orange = frame.copy()
     im_orange[im_hsv==0] = 0
     
+    #gray = cv2.cvtColor(im_orange, cv2.COLOR_BGR2GRAY)
     gray = cv2.cvtColor(im_orange, cv2.COLOR_BGR2GRAY)
 
     gray = cv2.GaussianBlur(gray,(5,5),0);
@@ -86,7 +161,7 @@ def testImage(inputImage, outputImage):
     gray = cv2.erode(gray,kernel,iterations = 1)
     gray = cv2.dilate(gray,kernel,iterations = 1)
     
-    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 28, 3500, param1=15, param2=85, minRadius=1, maxRadius=60)
+    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 11, 600, param1=15, param2=85, minRadius=1, maxRadius=120)
 
 
     # To show the detected orange parts:
@@ -113,14 +188,18 @@ def testImage(inputImage, outputImage):
         for (x, y, r) in circles:
             # draw the circle in the output image, then draw a rectangle
             # corresponding to the center of the circle
-            cv2.circle(gray, (x, y), r, (0, 0, 255), 4)
-            cv2.putText(gray, "circle", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 6)  # Text in black
+            cv2.circle(out, (x, y), r, (0, 0, 255), 4)
+            cv2.putText(out, "circle", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 6)  # Text in black
 
             #cv2.rectangle(out, (x - 25, y - 25), (x + 25, y + 25), (255, 0, 0), -1)
-            cv2.circle(out, (x, y), r, (0, 0, 255), 4)
+            #cv2.circle(out, (x, y), r, (0, 0, 255), 4)
             
         outImg = np.vstack([out, im_orange])
         cv2.imwrite(outputImage, outImg)
+
+
+    cv2.waitKey(0)
+
 
     # draw this circle
     #cv2.circle(frame, (int(center[1]), int(center[0])), int(radius), (255,0,0), thickness=3)
@@ -335,6 +414,86 @@ def detectHuman(videoPath, outputVideoName):
     outVideo.release()
 
 
+def detectBasketDunk(videoPath, outputVideoName):
+    
+    print ("videoPath, model path: ", videoPath)
+    
+    cap = readVideo(videoPath)
+    
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    WIDTH = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    HEIGHT = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    NUMFRAMES = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    
+    print ('cam stat: %s, %s, %s, %s ', fps, WIDTH, HEIGHT, NUMFRAMES)
+    
+    # outputVideoName =  "UCF101_v_longJump_g01_c01_out.avi"   # "UCF101_v_BasketballDunk_g01_c01_out.avi"  # "humanRunning_JHMDB_output_001.avi"
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')   # MJPG
+    outputVideoDir = os.path.join( os.path.dirname(__file__), '../output/')
+    finalOutDir = outputVideoDir + outputVideoName + "/"
+    if not os.path.exists(finalOutDir):
+        os.makedirs(finalOutDir)
+    
+    outVideo = cv2.VideoWriter(finalOutDir +"HOG_" + outputVideoName, fourcc, 5,  (int(WIDTH), int(HEIGHT)))
+    
+    
+    hog = cv2.HOGDescriptor()
+    hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+    
+    startFrame = 0
+    
+    
+    while True:
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        
+        if not ret:
+            print ("no frame exit here 1, total frames ", ret)
+            break
+        
+        startFrame += 1
+        
+        #orig = frame.copy()
+
+        #imScale = cv2.resize(frame,(320,240)) # Downscale to improve frame rate
+        
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+ 
+        # detect people in the image
+        (rects, weights) = hog.detectMultiScale(gray, winStride=(4, 4),
+        		padding=(8, 8), scale=1.05)
+         
+        # draw the original bounding boxes
+        #for (x, y, w, h) in rects:
+        #	 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+         
+        # apply non-maxima suppression to the bounding boxes using a
+        # fairly large overlap threshold to try to maintain overlapping
+        # boxes that are still people
+        rects = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
+        pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
+         
+        # draw the final bounding boxes
+        for (xA, yA, xB, yB) in pick:
+            cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
+        
+        frameOutFile = finalOutDir + 'basketDunkImg' + str(startFrame) + '.jpg'
+        if not os.path.exists(frameOutFile):
+            cv2.imwrite(frameOutFile, frame)
+
+        # Display the resulting frame
+        cv2.imshow('Video out', frame)
+        outVideo.write(frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+        
+    # When everything is done, release the capture
+    cap.release()
+    cv2.destroyAllWindows()
+    outVideo.release()
+    
 
 if __name__== "__main__":
     exec(sys.argv[1])
