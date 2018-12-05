@@ -487,7 +487,7 @@ def detectBasket(frame, xA, yA, xB, yB, startFrame,  outDir):
             basketCenterLst.append((int(center[0]) + xA, int(center[1]) + yA))
 
     if len(contour_list) != 0:
-        #print ("BASKET detected frame ", startFrame)
+        print ("BASKET detected frame ", startFrame)
 
         #cv2.drawContours(rectImg, contour_list,  -1, (255,0,0), 2)
         frameOutFile = outDir + 'B2_basket_' + str(startFrame) + '_' + str(xA) + '-' + str(yA) + '.jpg'
@@ -645,8 +645,8 @@ def detectBasketDunk(videoPath, outputVideoName):
                 for basketCenter in basketCenterLst:
                     actionDunk = judgeBasketDunkAction(humanCenter, ballCenter, basketCenter, humanCenter[0])
                     
-                    if actionDunk == True:
-                        print ("action frame detected ", startFrame, actionDunk)
+                    if actionDunk:
+                        print ("Action frame detected ", startFrame, actionDunk)
                     else:
                         print ("No action frame ", startFrame)
                         
