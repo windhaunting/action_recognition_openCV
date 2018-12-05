@@ -415,6 +415,23 @@ def detectHuman(videoPath, outputVideoName):
     outVideo.release()
 
 
+def judgeBasketDunkAction(humanPos, ballPos, basketPos):
+    '''
+    according to these postion to decide a frame has dunk or not 
+    each position use (x1, y1, x2, y2) left upper and right coordinate
+    '''
+    
+    humanCenterX = (humanPos[0] + humanPos[2])/2
+    humanCenterY = (humanPos[1] + humanPos[3])/2
+    
+    ballCenterX = (ballPos[0] + ballPos[2])/2
+    ballCenterY =  (ballPos[1] + ballPos[3])/2
+
+    basketCenterX = (basketPos[0] + basketPos[2])/2
+    basketCenterY = (basketPos[1] + basketPos[3])/2
+    
+    
+
 def detectBasket(frame, xA, yA, xB, yB, startFrame,  outDir):
     '''
     detect the basket
@@ -438,8 +455,8 @@ def detectBasket(frame, xA, yA, xB, yB, startFrame,  outDir):
     contour_list = []
     for contour in contours:
         #perfect circle area        
-        epsilon = .08 * cv2.arcLength(contour, False)
-        approx = cv2.approxPolyDP(contour,epsilon, False)
+        epsilon = .05 * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour,epsilon, True)
         area = cv2.contourArea(contour)
         
         #if area == 0:
@@ -448,21 +465,21 @@ def detectBasket(frame, xA, yA, xB, yB, startFrame,  outDir):
         #    contour_list.append(contour)
         #print ("area: ", len(approx), area)
 
-        if ((len(approx) >= 6) & (area > 5) ):
+        if ((len(approx) >= 6) and (area > 13) and (area < 16)):
             contour_list.append(contour)
-            print ("perfectEllipseArea: ", approx, len(approx), area)
+            print ("perfectEllipseArea: ", len(approx), area)
             ellipse= cv2.fitEllipse(contour)
             (center,axes,orientation) = ellipse
             #majoraxis_length = max(axes)
             #minoraxis_length = min(axes)
             #eccentricity=(np.sqrt(1-(minoraxis_length/majoraxis_length)**2))
-            cv2.ellipse(rectImg, ellipse, (0,0,255),2)
-
+            cv2.ellipse(rectImg, ellipse, (0,255,255),2)
+            cv2.putText(rectImg, "E", (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,255), 6)  # Text in black
             
     if len(contour_list) != 0:
         print ("BASKET detected frame ", startFrame)
 
-        cv2.drawContours(rectImg, contour_list,  -1, (255,0,0), 2)
+        #cv2.drawContours(rectImg, contour_list,  -1, (255,0,0), 2)
         frameOutFile = outDir + 'B2_basket_' + str(startFrame) + '_' + str(xA) + '-' + str(yA) + '.jpg'
         if not os.path.exists(frameOutFile):
             cv2.imwrite(frameOutFile, rectImg)
@@ -470,7 +487,6 @@ def detectBasket(frame, xA, yA, xB, yB, startFrame,  outDir):
         print ("No basket detected frame ", startFrame)
 
     #return frame
-    
     
 
 def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
@@ -486,7 +502,7 @@ def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
     #cv2.waitKey(0)
     
     edge_detected_image = cv2.Canny(bilateral_filtered_image, 75, 200)
-    cv2.imshow('Edge', edge_detected_image)
+    #cv2.imshow('Edge', edge_detected_image)
     #cv2.waitKey(0)
     
     contours, hierarchy = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -496,7 +512,7 @@ def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
     contour_list = []
     for contour in contours:
         #perfect circle area        
-        epsilon = .01 * cv2.arcLength(contour, False)
+        epsilon = 0.1 * cv2.arcLength(contour, False)
         approx = cv2.approxPolyDP(contour,epsilon, False)
         area = cv2.contourArea(contour)
         
@@ -506,19 +522,19 @@ def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
         #    contour_list.append(contour)
         #print ("area: ", len(approx))
        
-    
-        if ((len(approx) ==12) & (area > 10) ):
+        if ((len(approx) >= 5) and (area > 6) and (area < 20)):
             contour_list.append(contour)
-            print ("perfectCircleArea: ", approx, len(approx), area)
+            print ("perfectCircleArea: ", len(approx), area)
             (x,y),radius = cv2.minEnclosingCircle(contour)
             center = (int(x),int(y))
             radius = int(radius)
-            cv2.circle(rectImg, center,radius,(0,0,255),2)
-            
+            cv2.circle(rectImg, center,radius,(0,165,255),2)
+            cv2.putText(rectImg, "c" + str(round(area, 1)), (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,165,255), 6)  # Text in black
+
     if len(contour_list) != 0:
         print ("BASKETBALL detected frame ", startFrame)
 
-        cv2.drawContours(rectImg, contour_list,  -1, (255,0,0), 2)
+        #cv2.drawContours(rectImg, contour_list,  -1, (255,0,0), 2)
         frameOutFile = outDir + 'B1_basketeBall_' + str(startFrame) + '_' + str(xA) + '-' + str(yA) + '.jpg'
         if not os.path.exists(frameOutFile):
             cv2.imwrite(frameOutFile, rectImg)
@@ -528,7 +544,6 @@ def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
     #return frame
     
     
-
 def detectBasketDunk(videoPath, outputVideoName):
     '''
     detect basketball dunk
@@ -606,8 +621,8 @@ def detectBasketDunk(videoPath, outputVideoName):
             cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
             
             #crop image
-            #detectBall(frame, int(0.8*xA), int(0.5*yA), int(1.2*xB), int(1.5*yB), startFrame,  finalOutDir)
-            detectBasket(frame, int(0.3*xA), int(0.3*yA), int(1.5*xB), int(0.5*yB), startFrame,  finalOutDir)
+            detectBall(frame, int(0.8*xA), int(0.5*yA), int(1.2*xB), int(0.7*yB), startFrame,  finalOutDir)
+            detectBasket(frame, int(0.3*xA), int(0.1*yA), int(2*xB), int(0.5*yB), startFrame,  finalOutDir)
             
         # Display the resulting frame
         cv2.imshow('Video out', frame)
