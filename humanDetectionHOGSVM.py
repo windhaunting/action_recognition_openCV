@@ -415,22 +415,30 @@ def detectHuman(videoPath, outputVideoName):
     outVideo.release()
 
 
-def judgeBasketDunkAction(humanPos, ballPos, basketPos):
+def judgeBasketDunkAction(humanCenter, ballCenter, basketCenter, thresholdX):
     '''
     according to these postion to decide a frame has dunk or not 
     each position use (x1, y1, x2, y2) left upper and right coordinate
     '''
     
-    humanCenterX = (humanPos[0] + humanPos[2])/2
-    humanCenterY = (humanPos[1] + humanPos[3])/2
+    actionDunk = False
+    humanCenterX = humanCenter[0]
+    humanCenterY = humanCenter[1]
     
-    ballCenterX = (ballPos[0] + ballPos[2])/2
-    ballCenterY =  (ballPos[1] + ballPos[3])/2
+    ballCenterX = ballCenter[0]
+    ballCenterY = ballCenter[1]
 
-    basketCenterX = (basketPos[0] + basketPos[2])/2
-    basketCenterY = (basketPos[1] + basketPos[3])/2
+    basketCenterX = basketCenter[0]
+    basketCenterY = basketCenter[1]
     
-    
+    if (ballCenterY >= basketCenterY)    \
+        and (basketCenterY >= humanCenterY)   \
+        and (abs(basketCenterX - humanCenterX) < thresholdX):
+        actionDunk  = True
+
+    return actionDunk
+
+
 
 def detectBasket(frame, xA, yA, xB, yB, startFrame,  outDir):
     '''
@@ -451,7 +459,8 @@ def detectBasket(frame, xA, yA, xB, yB, startFrame,  outDir):
     contours, hierarchy = cv2.findContours(edge_detected_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
     # for basket  .03** cv2.arcLength(contour, False)  ((len(approx) >=10) & (area > 100) ):
-    # for basketball 
+    # for basket
+    basketCenterLst = []
     contour_list = []
     for contour in contours:
         #perfect circle area        
@@ -467,7 +476,7 @@ def detectBasket(frame, xA, yA, xB, yB, startFrame,  outDir):
 
         if ((len(approx) >= 6) and (area > 13) and (area < 16)):
             contour_list.append(contour)
-            print ("perfectEllipseArea: ", len(approx), area)
+            #print ("perfectEllipseArea: ", len(approx), area)
             ellipse= cv2.fitEllipse(contour)
             (center,axes,orientation) = ellipse
             #majoraxis_length = max(axes)
@@ -475,18 +484,20 @@ def detectBasket(frame, xA, yA, xB, yB, startFrame,  outDir):
             #eccentricity=(np.sqrt(1-(minoraxis_length/majoraxis_length)**2))
             cv2.ellipse(rectImg, ellipse, (0,255,255),2)
             cv2.putText(rectImg, "E", (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,255), 6)  # Text in black
-            
+            basketCenterLst.append((int(center[0]) + xA, int(center[1]) + yA))
+
     if len(contour_list) != 0:
-        print ("BASKET detected frame ", startFrame)
+        #print ("BASKET detected frame ", startFrame)
 
         #cv2.drawContours(rectImg, contour_list,  -1, (255,0,0), 2)
         frameOutFile = outDir + 'B2_basket_' + str(startFrame) + '_' + str(xA) + '-' + str(yA) + '.jpg'
         if not os.path.exists(frameOutFile):
             cv2.imwrite(frameOutFile, rectImg)
     else:
-        print ("No basket detected frame ", startFrame)
+        t = 1
+        #print ("No basket detected frame ", startFrame)
 
-    #return frame
+    return basketCenterLst
     
 
 def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
@@ -509,6 +520,8 @@ def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
     
     # for basket  .03** cv2.arcLength(contour, False)  ((len(approx) >=10) & (area > 100) ):
     # for basketball 
+    
+    ballCenterLst = []
     contour_list = []
     for contour in contours:
         #perfect circle area        
@@ -524,13 +537,14 @@ def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
        
         if ((len(approx) >= 5) and (area > 6) and (area < 20)):
             contour_list.append(contour)
-            print ("perfectCircleArea: ", len(approx), area)
+            #print ("perfectCircleArea: ", len(approx), area)
             (x,y),radius = cv2.minEnclosingCircle(contour)
             center = (int(x),int(y))
             radius = int(radius)
             cv2.circle(rectImg, center,radius,(0,165,255),2)
             cv2.putText(rectImg, "c" + str(round(area, 1)), (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,165,255), 6)  # Text in black
-
+            ballCenterLst.append((int(center[0]) + xA, int(center[1]) + yA))
+            
     if len(contour_list) != 0:
         print ("BASKETBALL detected frame ", startFrame)
 
@@ -539,9 +553,11 @@ def detectBall(frame, xA, yA, xB, yB, startFrame,  outDir):
         if not os.path.exists(frameOutFile):
             cv2.imwrite(frameOutFile, rectImg)
     else:
-        print ("No basketball detected frame ", startFrame)
+        t = 1
+        #print ("No basketball detected frame ", startFrame)
 
-    #return frame
+    
+    return ballCenterLst
     
     
 def detectBasketDunk(videoPath, outputVideoName):
@@ -620,10 +636,20 @@ def detectBasketDunk(videoPath, outputVideoName):
         for (xA, yA, xB, yB) in picks:
             cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
             
+            humanCenter = ((xA +xB)/2, (yA+yB)/2)
             #crop image
-            detectBall(frame, int(0.8*xA), int(0.5*yA), int(1.2*xB), int(0.7*yB), startFrame,  finalOutDir)
-            detectBasket(frame, int(0.3*xA), int(0.1*yA), int(2*xB), int(0.5*yB), startFrame,  finalOutDir)
+            ballCenterLst = detectBall(frame, int(0.8*xA), int(0.5*yA), int(1.2*xB), int(0.7*yB), startFrame,  finalOutDir)
+            basketCenterLst = detectBasket(frame, int(0.3*xA), int(0.1*yA), int(2*xB), int(0.5*yB), startFrame,  finalOutDir)
             
+            for ballCenter in ballCenterLst:
+                for basketCenter in basketCenterLst:
+                    actionDunk = judgeBasketDunkAction(humanCenter, ballCenter, basketCenter, humanCenter[0])
+                    
+                    if actionDunk == True:
+                        print ("action frame detected ", startFrame, actionDunk)
+                    else:
+                        print ("No action frame ", startFrame)
+                        
         # Display the resulting frame
         cv2.imshow('Video out', frame)
         outVideo.write(frame)
