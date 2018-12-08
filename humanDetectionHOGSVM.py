@@ -7,6 +7,7 @@ Created on Mon Nov 26 11:06:22 2018
 """
 
 # use  HOG + SVM to do detect human
+# and use edge detection to detect basketball and baseket to decide the basketball dunk existing or not
 
 
 # import the necessary packages
