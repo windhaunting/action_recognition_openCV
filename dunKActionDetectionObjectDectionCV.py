@@ -19,6 +19,7 @@ import sys
 import os
 import imutils
 import math
+import time
 
 from collections import deque
 
@@ -49,9 +50,14 @@ def detectBasketBall(modelPath, videoPath, outputVideoName):
     print ('cam stat: %s, %s, %s, %s ', fps, WIDTH, HEIGHT, NUMFRAMES)
     
     # outputVideoName =  "UCF101_v_longJump_g01_c01_out.avi"   # "UCF101_v_BasketballDunk_g01_c01_out.avi"  # "humanRunning_JHMDB_output_001.avi"
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')   # MJPG
-    outputVideoDir = os.path.join( os.path.dirname(__file__), '../output/')
-    outVideo = cv2.VideoWriter(outputVideoDir + outputVideoName, fourcc, 5,  (int(WIDTH), int(HEIGHT)))
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")   # X264 MP4V XVID MJPG
+    outputVideoDir = os.path.join( os.path.dirname(__file__), '../output-Kinetics/')
+   
+    finalOutDir = outputVideoDir + outputVideoName + "/"
+    if not os.path.exists(finalOutDir):
+        os.makedirs(finalOutDir)
+    
+    outVideo = cv2.VideoWriter(finalOutDir  + outputVideoName, fourcc, 5,  (int(WIDTH), int(HEIGHT)))
     
     
     
@@ -63,29 +69,29 @@ def detectBasketBall(modelPath, videoPath, outputVideoName):
             print ("no frame exit here 1, total frames ", ret)
             break
         
-        imScale = cv2.resize(frame,(300,300)) # Downscale to improve frame rate
+        #imScale = cv2.resize(frame,(300,300)) # Downscale to improve frame rate
         
-        gray = cv2.cvtColor(imScale, cv2.COLOR_BGR2GRAY)
-        print ("model pathssss: ", ret)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        #print ("model pathssss: ", ret)
         
-
+        #time.sleep(1)
                 
-        faces = objectCascade.detectMultiScale(
+        objs = objectCascade.detectMultiScale(
             gray,
-            scaleFactor=1.1,
+            scaleFactor=1.3,
             minNeighbors=5,
             minSize=(10, 10),
             flags=cv2.CASCADE_SCALE_IMAGE
         )
     
         # Draw a rectangle around the faces
-        for (x, y, w, h) in faces:
+        for (x, y, w, h) in objs:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
     
         # Display the resulting frame
         cv2.imshow('Video', frame)
         outVideo.write(frame)
-
+        
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     
@@ -97,7 +103,7 @@ def detectBasketBall(modelPath, videoPath, outputVideoName):
     
 if __name__== "__main__":
     
-    modelPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/basketBallDetectionTrain/baksetballTrainedModel/cascade.xml"
+    modelPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/basketBallDetectionTrain/basketballTrainedModel/cascade.xml"
     videoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/videos-dunkBasketball/dunking basketball/oyBZJZdiCQk_000007_000017.mp4"
-    outputVideoName = "output-Kinetics/oyBZJZdiCQk_000007_000017.mp4"
+    outputVideoName = "oyBZJZdiCQk_000007_000017_basketballDetect_out.mp4"
     detectBasketBall(modelPath, videoPath, outputVideoName)
