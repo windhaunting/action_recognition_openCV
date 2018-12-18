@@ -42,8 +42,8 @@ def testImage(modelPath, inputImage):
     bodies = bodyCascade.detectMultiScale(
         gray,
         scaleFactor=1.05,
-        minNeighbors=5,
-        minSize=(30, 30),
+        minNeighbors=3,
+        minSize=(5, 5),
     )
 
     # Draw a rectangle around the faces
@@ -100,8 +100,8 @@ def detectHuman(modelPath, videoPath, outputVideoName):
         faces = faceCascade.detectMultiScale(
             gray,
             scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(30, 30),
+            minNeighbors=0,
+            minSize=(20, 20),
             flags=cv2.CASCADE_SCALE_IMAGE
         )
     

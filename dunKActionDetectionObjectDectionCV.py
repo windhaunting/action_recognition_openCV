@@ -27,6 +27,30 @@ from dataComm import loggingSetting
 from dataComm import readVideo
 
 
+# define model path and parameter for each object detection
+class humanDetectParameter:
+    def __init__(self, modelPath, scaleFactor, minNeighbors, minSize):
+        self.modelPath = modelPath   #  ""
+        self.scaleFactor =  scaleFactor   # 1.05
+        self.minNeighbors = minNeighbors   # 3
+        self.minSize =  minSize          #(10, 10)
+    
+class basketBallParameter:
+    def __init__(self, modelPath, scaleFactor, minNeighbors, minSize):
+        self.modelPath = modelPath   #  ""
+        self.scaleFactor =  scaleFactor   # 1.05
+        self.minNeighbors = minNeighbors   # 3
+        self.minSize =  minSize          #(10, 10)
+        
+    
+class basketHoopParameter:
+    def __init__(self, modelPath, scaleFactor, minNeighbors, minSize):
+        self.modelPath = modelPath   #  ""
+        self.scaleFactor =  scaleFactor   # 1.05
+        self.minNeighbors = minNeighbors   # 3
+        self.minSize =  minSize          #(10, 10)
+        
+        
 
 def detectBasketBall(modelPath, videoPath, outputVideoName):
 
@@ -57,7 +81,7 @@ def detectBasketBall(modelPath, videoPath, outputVideoName):
     if not os.path.exists(finalOutDir):
         os.makedirs(finalOutDir)
     
-    outVideo = cv2.VideoWriter(finalOutDir  + outputVideoName, fourcc, 5,  (int(WIDTH), int(HEIGHT)))
+    outVideo = cv2.VideoWriter(finalOutDir  + outputVideoName, fourcc, 10,  (int(WIDTH), int(HEIGHT)))
     
     
     
@@ -78,12 +102,13 @@ def detectBasketBall(modelPath, videoPath, outputVideoName):
                 
         objs = objectCascade.detectMultiScale(
             gray,
-            scaleFactor=1.3,
-            minNeighbors=5,
+            scaleFactor=1.05,
+            minNeighbors=2,
             minSize=(10, 10),
             flags=cv2.CASCADE_SCALE_IMAGE
         )
     
+        print ("objs: ", type(objs), len(objs))
         # Draw a rectangle around the faces
         for (x, y, w, h) in objs:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
@@ -101,9 +126,23 @@ def detectBasketBall(modelPath, videoPath, outputVideoName):
     outVideo.release()
     
     
+
 if __name__== "__main__":
     
-    modelPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/basketBallDetectionTrain/basketballTrainedModel/cascade.xml"
-    videoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/videos-dunkBasketball/dunking basketball/oyBZJZdiCQk_000007_000017.mp4"
-    outputVideoName = "oyBZJZdiCQk_000007_000017_basketballDetect_out.mp4"
+    #modelPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/basketBallDetectionTrain/basketballTrainedModel/cascade.xml"
+    
+    modelPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/basketballHoopTrain/basketballHoopTrainedModel/cascade.xml"
+    
+    #videoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/videos-dunkBasketball/dunking_basketball/oyBZJZdiCQk_000007_000017.mp4"
+    videoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/videos-dunkBasketball/dunking_basketball/zxVjaOAmDBk_000000_000010.mp4"
+
+    
+    #videoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/videos-dunkBasketball/dunking_basketball/Zrm9_xE85d8_000001_000011.mp4"
+    #videoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/videos-dunkBasketball/dunking_basketball/0boDimB7PrA_000002_000012.mp4"
+
+    #videoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/videos-dunkBasketball/dunking_basketball/0A8ov5xMuAM_000003_000013.mp4"
+
+    #outputVideoName = "oyBZJZdiCQk_000007_000017_basketballDetect_out.mp4"
+    outputVideoName = videoPath.split("/")[-1] + "_basketballHoopDetect_out.mp4"     #_basketballDetect_out  _basketballHoopDetect_out
+
     detectBasketBall(modelPath, videoPath, outputVideoName)
