@@ -50,19 +50,20 @@ class basketHoopParameterCls:
         self.minNeighbors = minNeighbors   # 3
         self.minSize =  minSize          #(10, 10)
         
-def extendSectionSize(x,y, w, h):
+def extendSectionSize(x,y, w, h, ballSize, frameShape, extendRatio):
     '''
-    extend region sizei
+    extend region size around a detected region
     '''
-    EXTEND = 15
-    xA = x-ballSize[0]*EXTEND if (x-ballSize[0]*EXTEND) > 0 else 0
-    yA = y-ballSize[1]*EXTEND if (x-ballSize[1]*EXTEND) > 0 else 0
+    #EXTEND = 15
+    xA = x-ballSize[0]*extendRatio if (x-ballSize[0]*extendRatio) > 0 else 0
+    yA = y-ballSize[1]*extendRatio if (x-ballSize[1]*extendRatio) > 0 else 0
     
-    xB = x+w+ballSize[0]*EXTEND if (x+w+ballSize[0]*EXTEND) < gray.shape[0] else gray.shape[0]
+    xB = x+w+ballSize[0]*extendRatio if (x+w+ballSize[0]*extendRatio) < frameShape[0] else frameShape[0]
     
-    yB = y+h+ballSize[1]*EXTEND if (y+h+ballSize[1]*EXTEND) > gray.shape[1]  else gray.shape[1]
+    yB = y+h+ballSize[1]*extendRatio if (y+h+ballSize[1]*extendRatio) > frameShape[1]  else frameShape[1]
         
     return xA, yA, xB, yB
+
 
 def detectBasketballDunk(videoPath, outputVideoName):
     '''
@@ -137,15 +138,8 @@ def detectBasketballDunk(videoPath, outputVideoName):
             
             # get basketball's around area  how big
             ballSize = (w//2, h//2)
-
-            EXTEND = 14
-            xA = x-ballSize[0]*EXTEND if (x-ballSize[0]*EXTEND) > 0 else 0
-            yA = y-ballSize[1]*EXTEND if (x-ballSize[1]*EXTEND) > 0 else 0
             
-            xB = x+w+ballSize[0]*EXTEND if (x+w+ballSize[0]*EXTEND) < gray.shape[0] else gray.shape[0]
-            
-            yB = y+h+ballSize[1]*EXTEND if (y+h+ballSize[1]*EXTEND) > gray.shape[1]  else gray.shape[1]
-
+            xA, yA, xB, yB = extendSectionSize(x, y, w, h, ballSize, gray.shape, 15)
             cropImg_DetectHuman = frame[yA:yB, xA:xB]  
             
             cv2.rectangle(frame, (xA, yA), (xB, yB), (255, 0, 0), 3)
@@ -168,13 +162,8 @@ def detectBasketballDunk(videoPath, outputVideoName):
                 
             #also detect basketball hoop
              # detct human inside cropImg_DetectHuman
-            EXTEND = 15
-            xA = x-ballSize[0]*EXTEND if (x-ballSize[0]*EXTEND) > 0 else 0
-            yA = y-ballSize[1]*EXTEND if (x-ballSize[1]*EXTEND) > 0 else 0
-            
-            xB = x+w+ballSize[0]*EXTEND if (x+w+ballSize[0]*EXTEND) < gray.shape[0] else gray.shape[0]
-            
-            yB = y+h+ballSize[1]*EXTEND if (y+h+ballSize[1]*EXTEND) > gray.shape[1]  else gray.shape[1]
+             
+            xA, yA, xB, yB = extendSectionSize(x, y, w, h, ballSize, gray.shape, 10)
 
             cropImg_DetectHuman = frame[yA:yB, xA:xB]  
             
