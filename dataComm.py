@@ -83,6 +83,7 @@ def extractVideoFrames(inputVideoPath, outFramesPath, saveFileOrDict):
 
       count += 1
   
+      #cv2.waitKey( 1000 // 100)
     if saveFileOrDict == "file":
         return None
     elif saveFileOrDict == "dict":
@@ -92,6 +93,6 @@ def extractVideoFrames(inputVideoPath, outFramesPath, saveFileOrDict):
 if __name__== "__main__":
 
     inputVideoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/test1-ObjectDetection/inputOutputData/inputData/videos/cats/running/running_01/cat_running_01.mp4"
-    outFramesPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/test1-ObjectDetection/inputOutputData/inputData/videos/cats/running/running_01/"
-    extractVideoFrames(inputVideoPath, outFramesPath)
+    outFramesPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/test1-ObjectDetection/inputOutputData/inputData/videos/cats/running/running_012/"
+    extractVideoFrames(inputVideoPath, outFramesPath, "file")
 
