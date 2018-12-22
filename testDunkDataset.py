@@ -22,13 +22,12 @@ def testAllVideosDir():
     filePaths = glob.glob(inputVideoDir + "*.mp4")
     #print ("files: ", filePaths)
     
-    resolutionPx = 0
     
     for fps in frameRates:
-        for res in resolutions:
+        for reso in resolutions:
             
             for fpath in filePaths:
                 fileNameOut = " ".join(fpath.split("/")[-1].split(".")[:-1]) + "_basketballDunk_out.mp4"
                 print ("fileName: ", fileNameOut)
                 
-                detectBasketballDunk(fpath, fileNameOut, fps, res)
+                detectBasketballDunk(fpath, fileNameOut, fps, reso)

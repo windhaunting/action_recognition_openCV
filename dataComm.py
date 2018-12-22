@@ -72,14 +72,20 @@ def extractVideoFrames(inputVideoPath, outFramesPath, saveFileOrDict):
       
       ret, img = cap.read()
 
-      if saveFileOrDict == "file":
-          cv2.imwrite(os.path.join(outFramesPath, '%d.jpg') % count, img)     # save frame as JPEG file
-      elif saveFileOrDict == "dict":
-          imageDict[count] = img
           
       if not ret:
           print ("no frame exit here 1, total frames ")
           break
+      
+      # test resize resolution
+      
+      img = cv2.resize(img, (300, 300));
+      if saveFileOrDict == "file":
+          cv2.imwrite(os.path.join(outFramesPath, '%d.jpg') % count, img)     # save frame as JPEG file
+      elif saveFileOrDict == "dict":
+          imageDict[count] = img
+
+
 
       count += 1
   
@@ -93,6 +99,6 @@ def extractVideoFrames(inputVideoPath, outFramesPath, saveFileOrDict):
 if __name__== "__main__":
 
     inputVideoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/test1-ObjectDetection/inputOutputData/inputData/videos/cats/running/running_01/cat_running_01.mp4"
-    outFramesPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/test1-ObjectDetection/inputOutputData/inputData/videos/cats/running/running_012/"
+    outFramesPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/test1-ObjectDetection/inputOutputData/inputData/videos/cats/running/running_011/"
     extractVideoFrames(inputVideoPath, outFramesPath, "file")
 

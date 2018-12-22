@@ -72,7 +72,7 @@ def extendSectionSize(x,y, w, h, ballSize, frameShape, extendRatio):
     return xA, yA, xB, yB
 
 
-def detectBasketballDunk(videoPath, outputVideoName, fpsRed, resolutipnPx):
+def detectBasketballDunk(videoPath, outputVideoName, fpsRed, reso):
     '''
     detect basketball dunk action
     
@@ -106,6 +106,8 @@ def detectBasketballDunk(videoPath, outputVideoName, fpsRed, resolutipnPx):
     
     print ('cam stat: %s, %s, %s, %s ', fps, WIDTH, HEIGHT, NUMFRAMES)
     
+
+
     # outputVideoName =  "UCF101_v_longJump_g01_c01_out.avi"   # "UCF101_v_BasketballDunk_g01_c01_out.avi"  # "humanRunning_JHMDB_output_001.avi"
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")   # X264 MP4V XVID MJPG
     outputVideoDir = os.path.join( os.path.dirname(__file__), '../output-Kinetics/')
@@ -132,6 +134,9 @@ def detectBasketballDunk(videoPath, outputVideoName, fpsRed, resolutipnPx):
         if not ret:
             print ("no frame exit here 1, total frames ", ret)
             break
+        
+        # change resolution
+        frame = cv2.resize(frame, reso);
         
         #imScale = cv2.resize(frame,(300,300)) # Downscale to improve frame rate
         
@@ -220,7 +225,9 @@ def detectBasketballDunk(videoPath, outputVideoName, fpsRed, resolutipnPx):
         #cv2.imshow('Video', frame)
         outVideo.write(frame)
         
+        # change frame rate
         cv2.waitKey( 1000 / fpsRed)
+        
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     
