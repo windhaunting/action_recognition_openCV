@@ -85,8 +85,8 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     basketHoopModelPath = "../inputData/kinetics600/basketballHoopTrain/basketballHoopTrainedModel/cascade.xml"
     
 
-    basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.3, 10, (5,5)) 
-    humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.05, 3, (5,5))
+    basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.08, 5, (5,5)) 
+    humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.08, 5, (20,20))
     basketHoopParameter = basketHoopParameterCls(basketHoopModelPath, 1.05, 2, (5,5))
     
     
@@ -168,7 +168,7 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                 # get basketball's around area  how big
                 ballSize = (w//2, h//2)
                 
-                xA, yA, xB, yB = extendSectionSize(x, y, w, h, ballSize, gray.shape, 20)
+                xA, yA, xB, yB = extendSectionSize(x, y, w, h, ballSize, gray.shape, 30)
                 
                 cropImg_DetectHuman = frame[yA:yB, xA:xB]  
                 
@@ -187,11 +187,10 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                 )
                 #print ("humans: ", type(balls), len(balls), humanGray.shape)
                 for (humX, humY, humW, humH) in humans:
-                    originFrameX = humX + x if xA != 0 else humX          # humX +x
-                    originFrameY = humY + y if yA != 0 else humY            # # humX +y
-                    
-                    cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+humW, originFrameY+humH), (0, 0, 255), 3)      #RED for human
-                    
+                    #originFrameX = humX + x if xA != 0 else humX          # humX +x
+                    #originFrameY = humY + y if yA != 0 else humY            # # humX +y
+                    #cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+humW, originFrameY+humH), (0, 0, 255), 3)      #RED for human
+                    cv2.rectangle(frame, (humX, humY), (humX+humW, humY+humH), (0, 0, 255), 3)      #RED for human
                 #also detect basketball hoop
                  # detct human inside cropImg_DetectHuman
                  
@@ -212,10 +211,10 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                 )
                 #print ("hoops: ", type(hoops), len(hoops), hoopGray.shape)
                 for (hoopX, hoopY, hoopW, hoopH) in hoops:
-                    originFrameX = hoopX + x if xA != 0 else hoopX
-                    originFrameY = hoopY + y if yA != 0 else hoopY 
-                    cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+hoopW, originFrameY+hoopH), (0, 255, 255), 3) # yellow for basketball hoop
-                    
+                    #originFrameX = hoopX + x if xA != 0 else hoopX
+                    #originFrameY = hoopY + y if yA != 0 else hoopY 
+                    #cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+hoopW, originFrameY+hoopH), (0, 255, 255), 3) # yellow for basketball hoop
+                    cv2.rectangle(frame, (hoopX, hoopY), (hoopX+hoopW, hoopY+hoopH), (0, 255, 255), 3) # yellow for basketball hoop
                 
                 #decide the action of basketball dunk
                 ballCenter = (x + w/2, y + h/2)
@@ -225,9 +224,9 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                     for (humX, humY, humW, humH) in humans:
                         humanCenter = (humX + humW/2, humY + humH/2)
                         if ballCenter[1] > hoopCenter[1] and  hoopCenter[1] > humanCenter[1]:
-                            print ("actionDunk detected HERE HERE: ")
-                            # actionDunkCnt += 1
                             actionDunkEachKFrameCnt +=1
+                            print ("actionDunk detected HERE HERE: ", actionDunkEachKFrameCnt)
+
                             if actionDunkEachKFrameCnt >= K*ratioKFrame: 
                                 actionDunkCnt += 1
                                 

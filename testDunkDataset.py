@@ -22,16 +22,16 @@ from dataComm import loggingSetting
 def testAllVideosDir():
         
     K = 6     # each K frames
-    ratioKFrame = 0.5    # how many frames detected as dunk over K frame
+    ratioKFrame = 0.3    # how many frames detected as dunk over K frame
     frameRates = [30]  #  [30, 10, 5, 2, 1]    # [30],  [30, 10, 5, 2, 1] 
     resoPixels = [720]     # [720, 600, 480, 360, 240]  #  [720]    # [720, 600, 480, 360, 240]            #  16: 9
     resolutions = [(w*16//9, w) for w in resoPixels]
-    inputVideoDir = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/inputData/kinetics600/videos-dunkBasketball/testVideo01_10videos/"
+    inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_10videos/"
     # get video from inputVideoDir
     filePaths = glob.glob(inputVideoDir + "*.mp4")
     #print ("files: ", filePaths)
 
-    outLogPath = os.path.join( os.path.dirname(__file__), '../output-Kinetics/test_log.csv')
+    outLogPath = os.path.join( os.path.dirname(__file__), '../output-Kinetics/' + inputVideoDir.split("/")[-2] + '_test_log.csv')
     
     logLevel = logging.WARNING 
     logger = loggingSetting(outLogPath, logLevel)
