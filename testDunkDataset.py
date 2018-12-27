@@ -15,6 +15,7 @@ import logging
 import glob
 import sys
 import os 
+import csv
 
 from dataComm import loggingSetting
 
@@ -22,7 +23,7 @@ from dataComm import loggingSetting
 def testAllVideosDir():
         
     K = 6     # each K frames
-    ratioKFrame = 0.3    # how many frames detected as dunk over K frame
+    ratioKFrame = 0.1    # how many frames detected as dunk over K frame
     frameRates = [30]  #  [30, 10, 5, 2, 1]    # [30],  [30, 10, 5, 2, 1] 
     resoPixels = [720]     # [720, 600, 480, 360, 240]  #  [720]    # [720, 600, 480, 360, 240]            #  16: 9
     resolutions = [(w*16//9, w) for w in resoPixels]
@@ -31,7 +32,10 @@ def testAllVideosDir():
     filePaths = glob.glob(inputVideoDir + "*.mp4")
     #print ("files: ", filePaths)
 
-    outLogPath = os.path.join( os.path.dirname(__file__), '../output-Kinetics/' + inputVideoDir.split("/")[-2] + '_test_log.csv')
+    outLogPathDir = os.path.join( os.path.dirname(__file__), '../output-Kinetics/' + inputVideoDir.split("/")[-2] + '/')
+    if not os.path.exists(outLogPathDir):
+        os.makedirs(outLogPathDir)
+    outLogPath = outLogPathDir + inputVideoDir.split("/")[-2] + '_test_log.csv'
     
     logLevel = logging.WARNING 
     logger = loggingSetting(outLogPath, logLevel)
@@ -52,6 +56,16 @@ def testAllVideosDir():
                     actionTF = True
                 logger.warning('filename: %s, NumFrame: %s, frame rate: %s, resolution: %s, elapsedTotalTime: %s, timePerFrame:%s,  actionResult: %s, ActionTrueFalse: %s ',
                                fpath.split("/")[-1], NUMFRAMES, fps, reso, elapsedTime, elapsedTime/NUMFRAMES, actionDunkCnt, actionTF)
-                
+
+
+def plotConfiguration(inputFile):
+    with open(inputFile, "rt", encoding='ascii') as inputFile:
+        read = csv.reader(inputFile)
+        for row in read :
+            print (row)
+            break
+   
+    
+              
 if __name__== "__main__":
     exec(sys.argv[1])

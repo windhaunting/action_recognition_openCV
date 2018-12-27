@@ -96,6 +96,7 @@ def extractVideoFrames(inputVideoPath, outFramesPath, saveFileOrDict):
         return imageDict
     
  
+
 if __name__== "__main__":
 
     inputVideoPath = "/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/test1-ObjectDetection/inputOutputData/inputData/videos/cats/running/running_01/cat_running_01.mp4"

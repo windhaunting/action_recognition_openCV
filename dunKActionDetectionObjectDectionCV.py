@@ -85,8 +85,8 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     basketHoopModelPath = "../inputData/kinetics600/basketballHoopTrain/basketballHoopTrainedModel/cascade.xml"
     
 
-    basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.08, 5, (5,5)) 
-    humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.08, 5, (20,20))
+    basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.1, 7, (5,5)) 
+    humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.1, 5, (20,20))
     basketHoopParameter = basketHoopParameterCls(basketHoopModelPath, 1.05, 2, (5,5))
     
     
