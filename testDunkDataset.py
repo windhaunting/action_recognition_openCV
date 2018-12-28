@@ -16,8 +16,10 @@ import glob
 import sys
 import os 
 import csv
-import matplotlib.pyplot as plt
 
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pyplot as plt
 from dataComm import loggingSetting
 
 
@@ -28,7 +30,9 @@ def testAllVideosDir():
     frameRates = [30, 10, 5, 2, 1]    # [30]  #  [30, 10, 5, 2, 1]    # [30],  [30, 10, 5, 2, 1] 
     resoPixels =  [720, 600, 480, 360, 240]   # [720]     # [720, 600, 480, 360, 240]  #  [720]    # [720, 600, 480, 360, 240]            #  16: 9
     resolutions = [(w*16//9, w) for w in resoPixels]
-    inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_10videos/"
+    #inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_10videos/"
+    inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_30videos/"
+
     # get video from inputVideoDir
     filePaths = glob.glob(inputVideoDir + "*.mp4")
     #print ("files: ", filePaths)
@@ -43,7 +47,6 @@ def testAllVideosDir():
     
     for fps in frameRates:
         for reso in resolutions:
-            
             for fpath in filePaths:
                 fileNameOut = " ".join(fpath.split("/")[-1].split(".")[:-1]) + "_basketballDunk_out.mp4"
                 print ("fileName: ", fileNameOut)
@@ -145,22 +148,49 @@ def plotConfigImpact():
     fpsLst, resolutionLst, sPFTimeLst, accuracyEachConfigLst = readConfigurationResult(inputFile)
     
     knobNum = 5    # len(frameRates)
+    
     #plot 1 second per frame vs accuracy;   fixed resolution = 720p
-    xLst = []           # SPF
-    yLst = []           # SPF
-    i = 0         # resolution, framerate start index
-    for i in range(i, len(fpsLst), knobNum):
+    xSPFLst = []           # SPF
+    yAccLst = []           # SPF
+    start = 0         # resolution, framerate start index
+    for i in range(start, len(fpsLst), knobNum):
         print ("fpsLst: ", fpsLst[i])
-        xLst.append(sPFTimeLst[i])
-        yLst.append(accuracyEachConfigLst[i])
+        xSPFLst.append(sPFTimeLst[i])
+        yAccLst.append(accuracyEachConfigLst[i])
         
-    print ("xLst: ",  xLst, yLst)
+    print ("xSPFLst: ",  xSPFLst, yAccLst)
     
-    plt.plot(xLst, yLst, 'o-')
-    plt.title('Impact of frame rate')
-    plt.xlabel('Processing speed--Second per frame ')
+    plt.figure(1)
+    
+    plt.plot(xSPFLst, yAccLst, 'o-')
+    plt.title('Impact of frame rates: ' + '[1, 2, 5, 10, 30]')
+    plt.xlabel('Processing speed--Second Per Frame ')
     plt.ylabel('Accuracy')
+    plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "impactFrameRate1.pdf")
+
+
     
+    #plot 1 second per frame vs accuracy;   fixed resolution = 720p
+    xResoLst = []           # SPF
+    yAccLst = []           # Accuracy
+    start = 0         # resolution, framerate start index
+    for i in range(start, knobNum+start, 1):
+        print ("resolutionLst: ", resolutionLst[i])
+        xResoLst.append(sPFTimeLst[i])
+        yAccLst.append(accuracyEachConfigLst[i])
+        
+    print ("xResoLst: ",  xResoLst, yAccLst)
+    
+    plt.figure(2)
+    
+    plt.plot(xResoLst, yAccLst, 'o-')
+    plt.title('Impact of resolutions: ' + '[240, 360, 480, 600, 720]')
+    plt.xlabel('Processing speed--Second Per Frame ')
+    plt.ylabel('Accuracy')
+    plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "impactReso1.pdf")
+    
+    #plt.show()
+
               
 if __name__== "__main__":
     exec(sys.argv[1])
