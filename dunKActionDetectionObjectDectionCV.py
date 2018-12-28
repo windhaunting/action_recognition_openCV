@@ -85,7 +85,7 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     basketHoopModelPath = "../inputData/kinetics600/basketballHoopTrain/basketballHoopTrainedModel/cascade.xml"
     
 
-    basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.1, 7, (5,5)) 
+    basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.2, 7, (5,5)) 
     humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.1, 5, (20,20))
     basketHoopParameter = basketHoopParameterCls(basketHoopModelPath, 1.05, 2, (5,5))
     
@@ -111,8 +111,12 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     # outputVideoName =  "UCF101_v_longJump_g01_c01_out.avi"   # "UCF101_v_BasketballDunk_g01_c01_out.avi"  # "humanRunning_JHMDB_output_001.avi"
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")   # X264 MP4V XVID MJPG
     outputVideoDir = os.path.join( os.path.dirname(__file__), '../output-Kinetics/')
-   
-    finalOutDir = outputVideoDir + outputVideoName + "/"
+    
+    outputVideoDir += videoPath.split("/")[-2]
+    if not os.path.exists(outputVideoDir):
+        os.makedirs(outputVideoDir)
+
+    finalOutDir = outputVideoDir + '/' + outputVideoName + "/"
     if not os.path.exists(finalOutDir):
         os.makedirs(finalOutDir)
     
@@ -409,7 +413,7 @@ def detectBasketballDunk(videoPath, outputVideoName, fpsRed, reso):
                             
         # Display the resulting frame
         #cv2.imshow('Video', frame)
-        outVideo.write(frame)
+        #outVideo.write(frame)
         
         # change frame rate
         cv2.waitKey( 1000 // fpsRed)
