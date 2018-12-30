@@ -1,4 +1,4 @@
-# basketBallDunk Action recognition with traditional methods
+# BasketBallDunk Action recognition with traditional computer vision methods
 
 Metho1: Use tradition contour edge to detect balls
 
