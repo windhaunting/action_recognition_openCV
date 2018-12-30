@@ -31,8 +31,9 @@ def testAllVideosDir():
     resoPixels =  [720, 600, 480, 360, 240]   # [720]     # [720, 600, 480, 360, 240]  #  [720]    # [720, 600, 480, 360, 240]            #  16: 9
     resolutions = [(w*16//9, w) for w in resoPixels]
     #inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_10videos/"
-    inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_30videos/"
-
+    #inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_30videos/"
+    inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_50videos/"
+    
     # get video from inputVideoDir
     filePaths = glob.glob(inputVideoDir + "*.mp4")
     #print ("files: ", filePaths)
@@ -82,7 +83,7 @@ def readConfigurationResult(inputFile):
     actionDetected = 0
     accuracyEachConfigLst = []
     
-    numVideos = 10
+    numVideos = 50           # 30   10
     cnt = 0
     with open(inputFile, "rt", encoding='ascii') as inputFile:
         rows = csv.reader(inputFile)
@@ -126,7 +127,7 @@ def readConfigurationResult(inputFile):
     return fpsLst, resolutionLst, sPFTimeLst, accuracyEachConfigLst
 
 
-def plotConfigImpact():
+def plotConfigImpact(inputFile):
     '''
     plot 1:
     y axis:  accuracy 
@@ -143,8 +144,9 @@ def plotConfigImpact():
     only plot maximum frame rate = 30fps 
     '''
     
-    inputFile = '/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/output-Kinetics/testVideo01_trimmed_10videos/testVideo01_trimmed_10videos_test_log.csv'
-    
+    #inputFile = '/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/output-Kinetics/testVideo01_trimmed_10videos/testVideo01_trimmed_10videos_test_log.csv'
+    #inputFile = '/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/output-Kinetics/testVideo01_trimmed_30videos/testVideo01_trimmed_30videos_test_log.csv'
+
     fpsLst, resolutionLst, sPFTimeLst, accuracyEachConfigLst = readConfigurationResult(inputFile)
     
     knobNum = 5    # len(frameRates)
