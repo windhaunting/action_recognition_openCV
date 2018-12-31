@@ -156,19 +156,24 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
             #time.sleep(1)
                     
             # detect basketball first; then detect human around basketball
-            balls = basketballCascade.detectMultiScale(
+            balls, rejectLevels, levelWeights = basketballCascade.detectMultiScale3(
                 gray,
                 scaleFactor=basketBallDetectParameter.scaleFactor,
                 minNeighbors=basketBallDetectParameter.minNeighbors,
                 minSize=basketBallDetectParameter.minSize,
-                flags=cv2.CASCADE_SCALE_IMAGE
+                flags=cv2.CASCADE_SCALE_IMAGE,
+                outputRejectLevels=True
             )
-        
+            
             #print ("balls: ", type(balls), len(balls), gray.shape) 
             # Draw a rectangle around the faces
+            i = 0
             for (x, y, w, h) in balls:
                 cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)         # GREEN  for basketball
                 #print ("xxxa : ",  x, y, gray.shape)
+                cv2.putText(frame, str(round(levelWeights[i][0], 3)), (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 0), 1)     # Text in black "Hoop"
+                
+                i += 1
                 # get basketball's around area  how big
                 ballSize = (w//2, h//2)
                 
@@ -182,25 +187,30 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                 humanGray = cv2.cvtColor(cropImg_DetectHuman, cv2.COLOR_BGR2GRAY)
                 
                 #print ("humanGray: ", len(humanGray), humanGray.shape)
-                humans = humanCascade.detectMultiScale(
+                humans, rejectLevels, levelWeights  = humanCascade.detectMultiScale3(
                     humanGray,
                     scaleFactor=humanDetectParameter.scaleFactor,
                     minNeighbors=humanDetectParameter.minNeighbors,
                     minSize=humanDetectParameter.minSize,
-                    flags=cv2.CASCADE_SCALE_IMAGE
+                    flags=cv2.CASCADE_SCALE_IMAGE,
+                    outputRejectLevels = True
                 )
+                
                 #print ("humans: ", type(balls), len(balls), humanGray.shape)
+                i = 0
                 for (humX, humY, humW, humH) in humans:
                     originFrameX = humX + x if xA != 0 else humX          # humX +x
                     originFrameY = humY + y if yA != 0 else humY            # # humX +y
                     cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+humW, originFrameY+humH), (0, 0, 255), 3)      #RED for human
-                     #cv2.rectangle(frame, (humX, humY), (humX+humW, humY+humH), (0, 0, 255), 3)      #RED for human
-                #also detect basketball hoop
-                 # detct human inside cropImg_DetectHuman
-                 
+                    #cv2.rectangle(frame, (humX, humY), (humX+humW, humY+humH), (0, 0, 255), 3)      #RED for human
+                    cv2.putText(frame, str(round(levelWeights[i][0], 3)), (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 0), 1)     # Text in black "Hoop"
+
+                    # also detect basketball hoop
+                    # detct human inside cropImg_DetectHuman
+                    i += 1
+                    
                 xA, yA, xB, yB = extendSectionSize(x, y, w, h, ballSize, gray.shape, 15)
     
-                
                 cropImg_DetectHoop = frame[yA:yB, xA:xB]  
                 #print ("xxx : ",  x, y, ballSize, gray.shape)
                 #print (" xA, yA, xB, yB : ",  xA, yA, xB, yB, gray.shape)
@@ -214,6 +224,7 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                     flags=cv2.CASCADE_SCALE_IMAGE,
                     outputRejectLevels=True
                 )
+                
                 #print ("hoops: ", type(hoops), len(hoops), hoopGray.shape)
                 i = 0
                 for (hoopX, hoopY, hoopW, hoopH) in hoops:
