@@ -86,7 +86,7 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     
 
     basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.2, 7, (5,5)) 
-    humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.1, 5, (20,20))
+    humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.05, 5, (20,20))
     basketHoopParameter = basketHoopParameterCls(basketHoopModelPath, 1.05, 2, (5,5))
     
     
@@ -191,10 +191,10 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                 )
                 #print ("humans: ", type(balls), len(balls), humanGray.shape)
                 for (humX, humY, humW, humH) in humans:
-                    #originFrameX = humX + x if xA != 0 else humX          # humX +x
-                    #originFrameY = humY + y if yA != 0 else humY            # # humX +y
-                    #cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+humW, originFrameY+humH), (0, 0, 255), 3)      #RED for human
-                    cv2.rectangle(frame, (humX, humY), (humX+humW, humY+humH), (0, 0, 255), 3)      #RED for human
+                    originFrameX = humX + x if xA != 0 else humX          # humX +x
+                    originFrameY = humY + y if yA != 0 else humY            # # humX +y
+                    cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+humW, originFrameY+humH), (0, 0, 255), 3)      #RED for human
+                     #cv2.rectangle(frame, (humX, humY), (humX+humW, humY+humH), (0, 0, 255), 3)      #RED for human
                 #also detect basketball hoop
                  # detct human inside cropImg_DetectHuman
                  
@@ -206,20 +206,26 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                 #print (" xA, yA, xB, yB : ",  xA, yA, xB, yB, gray.shape)
                 hoopGray = cv2.cvtColor(cropImg_DetectHoop, cv2.COLOR_BGR2GRAY)
                 
-                hoops = basketHoopCascade.detectMultiScale(
+                hoops, rejectLevels, levelWeights = basketHoopCascade.detectMultiScale3(
                     hoopGray,
                     scaleFactor=basketHoopParameter.scaleFactor,
                     minNeighbors=basketHoopParameter.minNeighbors,
                     minSize=basketHoopParameter.minSize,
-                    flags=cv2.CASCADE_SCALE_IMAGE
+                    flags=cv2.CASCADE_SCALE_IMAGE,
+                    outputRejectLevels=True
                 )
                 #print ("hoops: ", type(hoops), len(hoops), hoopGray.shape)
+                i = 0
                 for (hoopX, hoopY, hoopW, hoopH) in hoops:
-                    #originFrameX = hoopX + x if xA != 0 else hoopX
-                    #originFrameY = hoopY + y if yA != 0 else hoopY 
-                    #cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+hoopW, originFrameY+hoopH), (0, 255, 255), 3) # yellow for basketball hoop
-                    cv2.rectangle(frame, (hoopX, hoopY), (hoopX+hoopW, hoopY+hoopH), (0, 255, 255), 3) # yellow for basketball hoop
-                
+                    originFrameX = hoopX + x if xA != 0 else hoopX
+                    originFrameY = hoopY + y if yA != 0 else hoopY 
+                    cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+hoopW, originFrameY+hoopH), (0, 255, 255), 3)       # yellow for basketball hoop
+                    
+                    #cv2.rectangle(frame, (hoopX, hoopY), (hoopX+hoopW, hoopY+hoopH), (0, 255, 255), 3) # yellow for basketball hoop
+                    cv2.putText(frame, str(round(levelWeights[i][0], 3)), (originFrameX, originFrameY), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 0), 1)     # Text in black "Hoop"
+                    
+                    i += 1
+                    
                 #decide the action of basketball dunk
                 ballCenter = (x + w/2, y + h/2)
                 
