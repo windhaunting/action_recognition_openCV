@@ -167,13 +167,13 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
             
             #print ("balls: ", type(balls), len(balls), gray.shape) 
             # Draw a rectangle around the faces
-            i = 0
+            baI = 0
             for (x, y, w, h) in balls:
                 cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)         # GREEN  for basketball
-                #print ("xxxa : ",  x, y, gray.shape)
-                cv2.putText(frame, str(round(levelWeights[i][0], 3)), (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 0), 1)     # Text in black "Hoop"
+                print ("xxxa : ",  x, y, gray.shape, baI, type(levelWeights), levelWeights.shape)
+                cv2.putText(frame, 'ball', (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 1)     # Text in black "Ball" str(round(levelWeights[baI][0], 3))
                 
-                i += 1
+                baI += 1
                 # get basketball's around area  how big
                 ballSize = (w//2, h//2)
                 
@@ -197,17 +197,17 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                 )
                 
                 #print ("humans: ", type(balls), len(balls), humanGray.shape)
-                i = 0
+                hmI = 0
                 for (humX, humY, humW, humH) in humans:
                     originFrameX = humX + x if xA != 0 else humX          # humX +x
                     originFrameY = humY + y if yA != 0 else humY            # # humX +y
                     cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+humW, originFrameY+humH), (0, 0, 255), 3)      #RED for human
                     #cv2.rectangle(frame, (humX, humY), (humX+humW, humY+humH), (0, 0, 255), 3)      #RED for human
-                    cv2.putText(frame, str(round(levelWeights[i][0], 3)), (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 0), 1)     # Text in black "Hoop"
+                    cv2.putText(frame, str(round(levelWeights[hmI][0], 3)), (originFrameX, originFrameY), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 1)     # Text in black "Human"
 
                     # also detect basketball hoop
                     # detct human inside cropImg_DetectHuman
-                    i += 1
+                    hmI += 1
                     
                 xA, yA, xB, yB = extendSectionSize(x, y, w, h, ballSize, gray.shape, 15)
     
@@ -226,16 +226,16 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                 )
                 
                 #print ("hoops: ", type(hoops), len(hoops), hoopGray.shape)
-                i = 0
+                hpI = 0
                 for (hoopX, hoopY, hoopW, hoopH) in hoops:
                     originFrameX = hoopX + x if xA != 0 else hoopX
                     originFrameY = hoopY + y if yA != 0 else hoopY 
                     cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+hoopW, originFrameY+hoopH), (0, 255, 255), 3)       # yellow for basketball hoop
                     
                     #cv2.rectangle(frame, (hoopX, hoopY), (hoopX+hoopW, hoopY+hoopH), (0, 255, 255), 3) # yellow for basketball hoop
-                    cv2.putText(frame, str(round(levelWeights[i][0], 3)), (originFrameX, originFrameY), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 0), 1)     # Text in black "Hoop"
+                    cv2.putText(frame, str(round(levelWeights[hpI][0], 3)), (originFrameX, originFrameY), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 1)     # Text in black "Hoop"
                     
-                    i += 1
+                    hpI += 1
                     
                 #decide the action of basketball dunk
                 ballCenter = (x + w/2, y + h/2)
