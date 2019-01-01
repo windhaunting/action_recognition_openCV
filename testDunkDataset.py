@@ -48,7 +48,7 @@ def testAllVideosDir():
     
     for fps in frameRates:
         for reso in resolutions:
-            for fpath in filePaths[1:2]:
+            for fpath in filePaths:
                 fileNameOut = " ".join(fpath.split("/")[-1].split(".")[:-1]) + "_basketballDunk_out.mp4"
                 print ("fileName: ", fileNameOut)
                 
