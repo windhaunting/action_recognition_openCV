@@ -27,12 +27,12 @@ def testAllVideosDir():
         
     K = 6     # each K frames
     ratioKFrame = 0.1    # how many frames detected as dunk over K frame
-    frameRates = [30]    #  [30, 10, 5, 2, 1]    # [30],  [30, 10, 5, 2, 1] 
-    resoPixels =  [720]     # [720, 600, 480, 360, 240]  #  [720]    # [720, 600, 480, 360, 240]            #  16: 9
+    frameRates = [30, 10, 5, 2, 1]            #  [30]    #  [30, 10, 5, 2, 1]    # [30],  [30, 10, 5, 2, 1] 
+    resoPixels = [720, 600, 480, 360, 240]    #   [720]     # [720, 600, 480, 360, 240]  #  [720]    # [720, 600, 480, 360, 240]            #  16: 9
     resolutions = [(w*16//9, w) for w in resoPixels]
-    inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_10videos/"
+    #inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_10videos/"
     #inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_30videos/"
-    #inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_50videos/"
+    inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_50videos/"
     
     # get video from inputVideoDir
     filePaths = glob.glob(inputVideoDir + "*.mp4")

@@ -81,13 +81,13 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     
     '''
     basketballModelPath = "../inputData/kinetics600/basketBallDetectionTrain/basketballTrainedModel/cascade.xml"
-    humanModelPath = "../model/haarcascade_fullbody.xml"       # haarcascade_fullbody.xml   haarcascade_upperbody.xml
+    humanModelPath = "../model/haarcascade_upperbody.xml"       # haarcascade_fullbody.xml   haarcascade_upperbody.xml
     basketHoopModelPath = "../inputData/kinetics600/basketballHoopTrain/basketballHoopTrainedModel/cascade.xml"
     
 
-    basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.2, 7, (5,5)) 
-    humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.05, 5, (20,20))
-    basketHoopParameter = basketHoopParameterCls(basketHoopModelPath, 1.05, 1, (5,5))
+    basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.15, 7, (5,5)) 
+    humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.05, 4, (10,10))
+    basketHoopParameter = basketHoopParameterCls(basketHoopModelPath, 1.03, 1, (10,10))
     
     
     basketballCascade = cv2.CascadeClassifier(basketBallDetectParameter.modelPath)
@@ -248,16 +248,17 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
                                         hoopCenter = (hoopX + hoopW/2, hoopY + hoopH/2)
                                         for (humX, humY, humW, humH) in humans:
                                             humanCenter = (humX + humW/2, humY + humH/2)
-                                            if ballCenter[1] > hoopCenter[1] and  hoopCenter[1] > humanCenter[1]:
+                                            #if ballCenter[1] > hoopCenter[1] and  hoopCenter[1] > humanCenter[1]:
+                                            if x >= hoopX and y >= hoopY and (x+w) <= (hoopX+hoopW) and (y+h) <= (hoopY+hoopH) and hoopCenter[1] > humanCenter[1]:
                                                 actionDunkEachKFrameCnt +=1
-                                                print ("actionDunk detected HERE HERE: ", actionDunkEachKFrameCnt)
+                                                #print ("actionDunk detected HERE HERE: ", actionDunkEachKFrameCnt)
                     
                                                 if actionDunkEachKFrameCnt >= K*ratioKFrame: 
                                                     actionDunkCnt += 1
                                 
             # Display the resulting frame
             #cv2.imshow('Video', frame)
-            outVideo.write(frame)
+            #outVideo.write(frame)
         
             # change frame rate
             cv2.waitKey( 1000 // fpsRed)
@@ -334,11 +335,13 @@ def detectBasketballDunk(videoPath, outputVideoName, fpsRed, reso):
 
     outVideo = cv2.VideoWriter(finalOutDir  + outputVideoName, fourcc, fps,  (int(WIDTH), int(HEIGHT)))
     
+    cntFrm = 0
     actionDunkCnt = 0
     
     startTime = time.time()
     while True:
         # Capture frame-by-frame
+         
         ret, frame = cap.read()
         
         if not ret:
@@ -429,7 +432,7 @@ def detectBasketballDunk(videoPath, outputVideoName, fpsRed, reso):
                 for (humX, humY, humW, humH) in humans:
                     humanCenter = (humX + humW/2, humY + humH/2)
                     if ballCenter[1] > hoopCenter[1] and  hoopCenter[1] > humanCenter[1]:
-                        print ("actionDunk detected HERE HERE: ")
+                        print ("actionDunk detected HERE HERE Frame: ", cntFrm)
                         actionDunkCnt += 1
                             
         # Display the resulting frame
@@ -441,7 +444,7 @@ def detectBasketballDunk(videoPath, outputVideoName, fpsRed, reso):
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-    
+        cntFrm += 1
     # When everything is done, release the capture
     cap.release()
     cv2.destroyAllWindows()
