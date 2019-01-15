@@ -71,7 +71,42 @@ def extendSectionSize(x,y, w, h, ballSize, frameShape, extendRatio):
     return xA, yA, xB, yB
 
 
+def changeFrameRate(inputVideoPath, saveFileOrDict):
+    cap = readVideo(inputVideoPath)
+    
+    if (not cap.isOpened):
+        print ('cam not opened: %s ', cap.isOpened())
+        return 
 
+    FPS = cap.get(cv2.CAP_PROP_FPS)
+    WIDTH = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    HEIGHT = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    NUMFRAMES = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    
+    print('cam stat: ', FPS, WIDTH, HEIGHT, NUMFRAMES)
+    
+    count = 1
+
+    while True:
+      
+      ret, img = cap.read()
+
+      if not ret:
+          print ("no frame exit here 1, total frames ")
+          break
+      
+      # test resize resolution
+      
+      img = cv2.resize(img, (300, 300));
+      if saveFileOrDict == "file":
+          cv2.imwrite(os.path.join(outFramesPath, '%d.jpg') % count, img)     # save frame as JPEG file
+      elif saveFileOrDict == "dict":
+          imageDict[count] = img
+
+
+      count += 1
+      
+      
 def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, reso, K, ratioKFrame):
     '''
     detect basketball dunk action
@@ -98,12 +133,15 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     
     cap = readVideo(videoPath)
     
+    #cap.set(cv2.CAP_PROP_FPS, fpsRed)  not working
+
     fps = cap.get(cv2.CAP_PROP_FPS)
 
     WIDTH = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
     HEIGHT = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
     NUMFRAMES = cap.get(cv2.CAP_PROP_FRAME_COUNT)
     
+
     #print ('cam stat: %s, %s, %s, %s ', fps, WIDTH, HEIGHT, NUMFRAMES)
     
 
@@ -133,23 +171,40 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     
     startFrm = 0  
     endFrm = 0
+    realFrameNum = 0
+    filterFrameNumMax = int(25//fpsRed-1)          # maximum is 25 sampling rate, filter frame in each second because of frame rate reduction ; extract every fps frame
 
+    # exception processing
+    if NUMFRAMES < 25 and fpsRed == 1:
+        filterFrameNumMax = NUMFRAMES -1
+        
     startTime = time.time()
-    realFrameNum = 0                # because of frame rate reduction
-    while (startFrm < NUMFRAMES + 1 -K):
+    exitFlag = False
+    while (startFrm < NUMFRAMES + 1 -K and not exitFlag):
         # Capture frame-by-frame
         
         endFrm = 0
-        
+        filterCnt = 0               # for fps sampling rate
         while (endFrm < K) and (startFrm < NUMFRAMES):
+            
             ret, frame = cap.read()
             if not ret:
                 print ("no frame exit here 1, total frames ", ret)
+                exitFlag = True
                 break
+
+            if filterCnt < filterFrameNumMax:
+                filterCnt += 1
+                continue
+            elif filterCnt >= filterFrameNumMax:
+                filterCnt = 0
+            
+            # print ("realFrameNum frames ", NUMFRAMES, realFrameNum, filterCnt, filterFrameNumMax)
+            
             # change resolution
             frame = cv2.resize(frame, reso);
             
-            #imScale = cv2.resize(frame,(300,300)) # Downscale to improve frame rate
+            #imScale = cv2.resize(frame,(300,300))                    # Downscale to improve frame rate
             
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)            # gray shape (height, width)
             #print ("model pathssss: ", ret)
@@ -260,29 +315,31 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
             # Display the resulting frame
             #cv2.imshow('Video', frame)
             #outVideo.write(frame)
-        
+            realFrameNum += 1
+
             # change frame rate
-            cv2.waitKey( 1000 // fpsRed)
+            #cv2.waitKey( 1000 // fpsRed)
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         
             startFrm += 1
             endFrm += 1
+            
         # next loop;  clear last K frame detection result
         actionDunkEachKFrameCnt = 0 
         
-        realFrameNum += 1
     # When everything is done, release the capture
     cap.release()
     cv2.destroyAllWindows()
     outVideo.release()
-    print ("actionDunk count: ", actionDunkCnt)
+    print ("actionDunk count: ", actionDunkCnt, fps, realFrameNum, NUMFRAMES)
+    
     elapsedTime = time.time() - startTime
     #logger.info("actionDunk count %s ;  elapsedTime: %s s", actionDunkCnt, elapsedTime)
     
     
-    return actionDunkCnt, elapsedTime, realFrameNum
+    return actionDunkCnt, elapsedTime, realFrameNum, NUMFRAMES
 
 
 def detectBasketballDunk(videoPath, outputVideoName, fpsRed, reso):

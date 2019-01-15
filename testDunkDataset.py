@@ -27,8 +27,8 @@ def testAllVideosDir(inputVideoDir):
         
     K = 6     # each K frames
     ratioKFrame = 0.1    # how many frames detected as dunk over K frame
-    frameRates = [30, 10, 5, 2, 1]            #  [30]    #  [30, 10, 5, 2, 1]    # [30],  [30, 10, 5, 2, 1] 
-    resoPixels = [240]       # [720, 600, 480, 360, 240]    #   [720]     # [720, 600, 480, 360, 240]  #  [720]    # [720, 600, 480, 360, 240]            #  16: 9
+    frameRates = [25, 10, 5, 2, 1]   # [5]   #[25, 10, 5, 2, 1]            #  [25]    #  [25, 10, 5, 2, 1]    # [30],  [30, 10, 5, 2, 1] 
+    resoPixels = [720, 600, 480, 360, 240]   # [240] # [720, 600, 480, 360, 240]    # [240]       # [720, 600, 480, 360, 240]    #   [720]     # [720, 600, 480, 360, 240]  #  [720]    # [720, 600, 480, 360, 240]            #  16: 9
     resolutions = [(w*16//9, w) for w in resoPixels]
     #inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_10videos/"
     #inputVideoDir = "../inputData/kinetics600/videos-dunkBasketball/testVideo01_trimmed_30videos/"
@@ -43,6 +43,8 @@ def testAllVideosDir(inputVideoDir):
         os.makedirs(outLogPathDir)
     outLogPath = outLogPathDir + inputVideoDir.split("/")[-2] + '_test_log.csv'
     
+    
+    
     logLevel = logging.WARNING 
     logger = loggingSetting(outLogPath, logLevel)
     
@@ -53,14 +55,14 @@ def testAllVideosDir(inputVideoDir):
                 print ("fileName: ", fileNameOut)
                 
                 #actionDunkCnt, elapsedTime, NUMFRAMES = detectBasketballDunk(fpath, fileNameOut, fps, reso)
-                actionDunkCnt, elapsedTime, realFrameNum = detectBasketballDunkKFrameFixedWindow(fpath, fileNameOut, fps, reso, K, ratioKFrame)
+                actionDunkCnt, elapsedTime, realFrameNum, NUMFRAMESTOTAL = detectBasketballDunkKFrameFixedWindow(fpath, fileNameOut, fps, reso, K, ratioKFrame)
 
                 
                 actionTF = False           # TrueFalse
                 if actionDunkCnt >= 1:
                     actionTF = True
-                logger.warning('filename: %s, NumFrame: %s, frame rate: %s, resolution: %s, elapsedTotalTime: %s, timePerFrame:%s, actionResult: %s, ActionTrueFalse: %s ',
-                               fpath.split("/")[-1], realFrameNum, fps, reso[1], elapsedTime, elapsedTime/realFrameNum, actionDunkCnt, actionTF)
+                logger.warning('filename: %s, NumFrames: %s, frame rate: %s, resolution: %s, elapsedTotalTime: %s, timePerFrame:%s, actionResult: %s, ActionTrueFalse: %s ',
+                               fpath.split("/")[-1], realFrameNum, fps, reso[1], elapsedTime, elapsedTime/NUMFRAMESTOTAL, actionDunkCnt, actionTF)
 
 
 def readConfigurationResult(inputFile):
@@ -141,7 +143,7 @@ def plotConfigImpact(inputFile):
     x axis: delay time; SPF second per frame  
     value:  image size: resolution;  different resolution's accuracy and SPF value pair
 
-    only plot maximum frame rate = 30fps 
+    only plot maximum frame rate = 25fps 
     '''
     
     #inputFile = '/home/fubao/workDir/ResearchProjects/IOTVideoAnalysis/openCVMethod/output-Kinetics/testVideo01_trimmed_10videos/testVideo01_trimmed_10videos_test_log.csv'
@@ -149,7 +151,7 @@ def plotConfigImpact(inputFile):
 
     fpsLst, resolutionLst, sPFTimeLst, accuracyEachConfigLst = readConfigurationResult(inputFile)
     
-    knobNum = 5    # len(frameRates)
+    knobNum = 5  # 5    # len(frameRates)
     
     #plot 1 second per frame vs accuracy;   fixed resolution = 720p
     xSPFLst = []           # SPF
@@ -164,10 +166,10 @@ def plotConfigImpact(inputFile):
     
     plt.figure(1)
     
-    plt.plot(xSPFLst, yAccLst, 'o-')
-    plt.title('Impact of frame rates: ' + '[1, 2, 5, 10, 30]')
-    plt.xlabel('Processing speed--Second Per Frame ')
-    plt.ylabel('Accuracy')
+    plt.plot(yAccLst[::-1], xSPFLst[::-1], 'o-')
+    plt.title('Impact of frame rates: ' + '[1, 2, 5, 10, 25]')
+    plt.ylabel('Processing speed--Second Per Frame ')
+    plt.xlabel('Accuracy')
     plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "impactFrameRate1.pdf")
 
 
@@ -185,10 +187,10 @@ def plotConfigImpact(inputFile):
     
     plt.figure(2)
     
-    plt.plot(xResoLst, yAccLst, 'o-')
+    plt.plot(yAccLst[::-1], xResoLst[::-1], 'o-')
     plt.title('Impact of resolutions: ' + '[240, 360, 480, 600, 720]')
-    plt.xlabel('Processing speed--Second Per Frame ')
-    plt.ylabel('Accuracy')
+    plt.ylabel('Processing speed--Second Per Frame ')
+    plt.xlabel('Accuracy')
     plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "impactReso1.pdf")
     
     #plt.show()
