@@ -164,13 +164,14 @@ def plotConfigImpact(inputFile):
         
     print ("xSPFLst: ",  xSPFLst, yAccLst)
     
+    '''
     ax = plt.subplot() # Defines ax variable by creating an empty plot
-
     # Set the tick labels font
     for label in (ax.get_xticklabels() + ax.get_yticklabels()):
     #label.set_fontname('Arial')
         label.set_fontsize(15)
-
+    '''
+    
     plt.figure(1)
     
     plt.plot(yAccLst[::-1], xSPFLst[::-1], 'o-')
@@ -192,12 +193,6 @@ def plotConfigImpact(inputFile):
         
     print ("xResoLst: ",  xResoLst, yAccLst)
     
-    ax = plt.subplot() # Defines ax variable by creating an empty plot
-
-    # Set the tick labels font
-    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
-    #label.set_fontname('Arial')
-        label.set_fontsize(15)
         
     plt.figure(2)
     
