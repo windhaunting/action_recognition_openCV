@@ -41,7 +41,7 @@ def testAllVideosDir(inputVideoDir):
     outLogPathDir = os.path.join( os.path.dirname(__file__), '../output-Kinetics/' + inputVideoDir.split("/")[-2] + '/')
     if not os.path.exists(outLogPathDir):
         os.makedirs(outLogPathDir)
-    outLogPath = outLogPathDir + inputVideoDir.split("/")[-2] + '_test_log.csv'
+    outLogPath = outLogPathDir + inputVideoDir.split("/")[-2] + '_CCV_test_log.csv'
     
     
     
@@ -164,13 +164,20 @@ def plotConfigImpact(inputFile):
         
     print ("xSPFLst: ",  xSPFLst, yAccLst)
     
+    ax = plt.subplot() # Defines ax variable by creating an empty plot
+
+    # Set the tick labels font
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+    #label.set_fontname('Arial')
+        label.set_fontsize(15)
+
     plt.figure(1)
     
     plt.plot(yAccLst[::-1], xSPFLst[::-1], 'o-')
-    plt.title('Impact of frame rates: ' + '[1, 2, 5, 10, 25]')
-    plt.ylabel('Processing speed--Second Per Frame ')
-    plt.xlabel('Accuracy')
-    plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "impactFrameRate1.pdf")
+    plt.title('Impact of frame rates: ' + '[1, 2, 5, 10, 25]', size=16)
+    plt.ylabel('Processing speed--Second Per Frame ', size=16)
+    plt.xlabel('Accuracy', size=16)
+    plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "CCV_impactFrameRate1.pdf")
 
 
     
@@ -185,13 +192,20 @@ def plotConfigImpact(inputFile):
         
     print ("xResoLst: ",  xResoLst, yAccLst)
     
+    ax = plt.subplot() # Defines ax variable by creating an empty plot
+
+    # Set the tick labels font
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+    #label.set_fontname('Arial')
+        label.set_fontsize(15)
+        
     plt.figure(2)
     
     plt.plot(yAccLst[::-1], xResoLst[::-1], 'o-')
-    plt.title('Impact of resolutions: ' + '[240, 360, 480, 600, 720]')
-    plt.ylabel('Processing speed--Second Per Frame ')
-    plt.xlabel('Accuracy')
-    plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "impactReso1.pdf")
+    plt.title('Impact of resolutions: ' + '[240, 360, 480, 600, 720]', size=16)
+    plt.ylabel('Processing speed--Second Per Frame ', size=16)
+    plt.xlabel('Accuracy', size=16)
+    plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "CCV_impactReso1.pdf")
     
     #plt.show()
 
