@@ -124,7 +124,7 @@ def readConfigurationResult(inputFile):
                 
                 cnt = 0
 
-    print ("averageSPF: ",  fpsLst, resolutionLst, sPFTimeLst, accuracyEachConfigLst)
+    print ("fps, resolution, spf, acc: ",  fpsLst, resolutionLst, sPFTimeLst, accuracyEachConfigLst)
             
     return fpsLst, resolutionLst, sPFTimeLst, accuracyEachConfigLst
 
@@ -154,15 +154,27 @@ def plotConfigImpact(inputFile):
     knobNum = 5  # 5    # len(frameRates)
     
     #plot 1 second per frame vs accuracy;   fixed resolution = 720p
-    xSPFLst = []           # SPF
-    yAccLst = []           # SPF
-    start = 0         # resolution, framerate start index
-    for i in range(start, len(fpsLst), knobNum):
-        print ("fpsLst: ", fpsLst[i])
-        xSPFLst.append(sPFTimeLst[i])
-        yAccLst.append(accuracyEachConfigLst[i])
+    
+    
+    xSPFAllResoLsts = []           # SPF
+    yAccAllResoLsts = []           # Accu
+    
+    resNum = 0
+    
+    while (resNum < len(resolutionLst)):
+        start = resNum         # resolution of 720  framerate start indexd
+        xSPFLst = []
+        yAccLst = []
+        for i in range(start, len(fpsLst), knobNum):
+            #print ("fpsLst: ", fpsLst[i])
+            xSPFLst.append(sPFTimeLst[i])
+            yAccLst.append(accuracyEachConfigLst[i])
         
-    print ("xSPFLst: ",  xSPFLst, yAccLst)
+        xSPFAllResoLsts.append(xSPFLst)
+        yAccAllResoLsts.append(yAccLst)
+        resNum += 1
+    print ("resolution 720: ",  xSPFAllResoLsts[0], yAccAllResoLsts[0])
+    
     
     '''
     ax = plt.subplot() # Defines ax variable by creating an empty plot
@@ -172,15 +184,20 @@ def plotConfigImpact(inputFile):
         label.set_fontsize(15)
     '''
     
+    
+
     plt.figure(1)
     
-    plt.plot(yAccLst[::-1], xSPFLst[::-1], 'o-')
+    for i in range(0, len(xSPFAllResoLsts)):            # len(xSPFAllResoLsts)
+        plt.plot(xSPFAllResoLsts[i][::-1], yAccAllResoLsts[i][::-1], 'o-')
+        
     plt.title('Impact of frame rates: ' + '[1, 2, 5, 10, 25]', size=16)
-    plt.ylabel('Processing speed--Second Per Frame ', size=16)
-    plt.xlabel('Accuracy', size=16)
+    plt.xlabel('CPU cost--Second Per Frame ', size=16)
+    plt.ylabel('Accuracy', size=16)
     plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "CCV_impactFrameRate1.pdf")
 
 
+    
     
     #plot 1 second per frame vs accuracy;   fixed resolution = 720p
     xResoLst = []           # SPF
@@ -196,10 +213,10 @@ def plotConfigImpact(inputFile):
         
     plt.figure(2)
     
-    plt.plot(yAccLst[::-1], xResoLst[::-1], 'o-')
-    plt.title('Impact of resolutions: ' + '[240, 360, 480, 600, 720]', size=16)
-    plt.ylabel('Processing speed--Second Per Frame ', size=16)
-    plt.xlabel('Accuracy', size=16)
+    plt.plot(xResoLst[::-1], yAccLst[::-1], 'o-')
+    plt.title('Impact of resolutions: ' + '[240, 360, 480, 600, 720]', size=16)      # [240, 360, 480, 600, 720]
+    plt.xlabel('CPU cost--Second Per Frame ', size=16)
+    plt.ylabel('Accuracy', size=16)
     plt.savefig("/".join(inputFile.split("/")[:-1]) + "/" + "CCV_impactReso1.pdf")
     
     #plt.show()
