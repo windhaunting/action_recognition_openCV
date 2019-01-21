@@ -156,7 +156,7 @@ def plotConfigImpact(inputFile):
     #plot 1 second per frame vs accuracy;   fixed resolution = 720p
     
     
-    xSPFAllResoLsts = []           # SPF
+    xSPFAllResoLsts = []           # All different FPS for one resolution
     yAccAllResoLsts = []           # Accu
     
     resNum = 0
@@ -199,17 +199,26 @@ def plotConfigImpact(inputFile):
 
     
     
-    #plot 1 second per frame vs accuracy;   fixed resolution = 720p
-    xResoLst = []           # SPF
-    yAccLst = []           # Accuracy
-    start = 0         # resolution, framerate start index
-    for i in range(start, knobNum+start, 1):
-        print ("resolutionLst: ", resolutionLst[i])
-        xResoLst.append(sPFTimeLst[i])
-        yAccLst.append(accuracyEachConfigLst[i])
-        
-    print ("xResoLst: ",  xResoLst, yAccLst)
+    xResoAllResoLsts = []           # reso
+    yAccAllResoLsts = []           # Accu
     
+    resNum = 0
+    
+    while (resNum < len(resolutionLst)):
+        start = resNum         # fps of 25  framerate start indexd
+        xResoLst = []
+        yAccLst = []
+        for i in range(start, knobNum+start, 1):
+            #print ("fpsLst: ", fpsLst[i])
+            xResoLst.append(sPFTimeLst[i])
+            yAccLst.append(accuracyEachConfigLst[i])
+        
+        xResoAllResoLsts.append(xResoLst)
+        yAccAllResoLsts.append(yAccLst)
+        resNum += knobNum       # add knobNum= 5
+    print ("frame rate 25: ",  xResoAllResoLsts[0], yAccAllResoLsts[0])
+    
+
         
     plt.figure(2)
     
