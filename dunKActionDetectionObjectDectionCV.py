@@ -71,40 +71,7 @@ def extendSectionSize(x,y, w, h, ballSize, frameShape, extendRatio):
     return xA, yA, xB, yB
 
 
-def changeFrameRate(inputVideoPath, saveFileOrDict):
-    cap = readVideo(inputVideoPath)
-    
-    if (not cap.isOpened):
-        print ('cam not opened: %s ', cap.isOpened())
-        return 
 
-    FPS = cap.get(cv2.CAP_PROP_FPS)
-    WIDTH = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    HEIGHT = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    NUMFRAMES = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-    
-    print('cam stat: ', FPS, WIDTH, HEIGHT, NUMFRAMES)
-    
-    count = 1
-
-    while True:
-      
-      ret, img = cap.read()
-
-      if not ret:
-          print ("no frame exit here 1, total frames ")
-          break
-      
-      # test resize resolution
-      
-      img = cv2.resize(img, (300, 300));
-      if saveFileOrDict == "file":
-          cv2.imwrite(os.path.join(outFramesPath, '%d.jpg') % count, img)     # save frame as JPEG file
-      elif saveFileOrDict == "dict":
-          imageDict[count] = img
-
-
-      count += 1
       
       
 def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, reso, K, ratioKFrame):
@@ -342,6 +309,141 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     return actionDunkCnt, elapsedTime, realFrameNum, NUMFRAMES
 
 
+def detectBasketballDunkKFrameCVV(kFrameDict):
+    '''
+    K frame to detect the basketball dunk action
+    input: k frames dict
+    
+    '''
+    basketballModelPath = "../inputData/kinetics600/basketBallDetectionTrain/basketballTrainedModel/cascade.xml"
+    humanModelPath = "../model/haarcascade_upperbody.xml"       # haarcascade_fullbody.xml   haarcascade_upperbody.xml
+    basketHoopModelPath = "../inputData/kinetics600/basketballHoopTrain/basketballHoopTrainedModel/cascade.xml"
+    
+
+    basketBallDetectParameter = basketBallParameterCls(basketballModelPath, 1.15, 7, (5,5)) 
+    humanDetectParameter = humanDetectParameterCls(humanModelPath, 1.05, 4, (10,10))
+    basketHoopParameter = basketHoopParameterCls(basketHoopModelPath, 1.03, 1, (10,10))
+    
+    
+    basketballCascade = cv2.CascadeClassifier(basketBallDetectParameter.modelPath)
+    humanCascade = cv2.CascadeClassifier(humanDetectParameter.modelPath)
+    basketHoopCascade = cv2.CascadeClassifier(basketHoopParameter.modelPath)
+    
+    actionDunkEachKFrameCnt = 0
+    
+    for cnt, frame in kFrameDict:
+        x = 1
+        
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)            # gray shape (height, width)
+        #print ("model pathssss: ", ret)
+        
+        #time.sleep(1)
+                
+        # detect basketball first; then detect human around basketball
+        balls, rejectLevelsBalls, levelWeightsBalls = basketballCascade.detectMultiScale3(
+            gray,
+            scaleFactor=basketBallDetectParameter.scaleFactor,
+            minNeighbors=basketBallDetectParameter.minNeighbors,
+            minSize=basketBallDetectParameter.minSize,
+            flags=cv2.CASCADE_SCALE_IMAGE,
+            outputRejectLevels=True
+        )
+        
+        
+         #print ("balls: ", type(balls), len(balls), gray.shape) 
+        # Draw a rectangle around the faces
+        baI = 0
+        for (x, y, w, h) in balls:
+            if levelWeightsBalls[baI][0] >= 0.5:
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)                # GREEN  for basketball
+                # print ("xxxa : ",  x, y, gray.shape, baI, levelWeightsBalls, len(levelWeightsBalls))
+                cv2.putText(frame, str(round(levelWeightsBalls[baI][0], 3)), (x, y), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)     # Text in black "Ball" 
+                
+                baI += 1
+                # get basketball's around area  how big
+                ballSize = (w//2, h//2)
+                
+                xA, yA, xB, yB = extendSectionSize(x, y, w, h, ballSize, gray.shape, 30)
+                
+                cropImg_DetectHuman = frame[yA:yB, xA:xB]  
+                
+                #cv2.rectangle(frame, (xA, yA), (xB, yB), (255, 0, 0), 3)            # for basketball's extended region
+                
+                # detct human inside cropImg_DetectHuman
+                humanGray = cv2.cvtColor(cropImg_DetectHuman, cv2.COLOR_BGR2GRAY)
+                
+                # print ("humanGray: ", len(humanGray), humanGray.shape)
+                humans, rejectLevelsHumans, levelWeightsHumans = humanCascade.detectMultiScale3(
+                    humanGray,
+                    scaleFactor=humanDetectParameter.scaleFactor,
+                    minNeighbors=humanDetectParameter.minNeighbors,
+                    minSize=humanDetectParameter.minSize,
+                    flags=cv2.CASCADE_SCALE_IMAGE,
+                    outputRejectLevels = True
+                )
+                
+                #print ("humans: ", type(balls), len(balls), humanGray.shape)
+                hmI = 0
+                for (humX, humY, humW, humH) in humans:
+                    if levelWeightsHumans[hmI][0] >= 0.5:
+                        originFrameX = humX + x if xA != 0 else humX            # humX +x
+                        originFrameY = humY + y if yA != 0 else humY            # # humX +y
+                        cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+humW, originFrameY+humH), (0, 0, 255), 3)      #RED for human
+                        #cv2.rectangle(frame, (humX, humY), (humX+humW, humY+humH), (0, 0, 255), 3)      #RED for human
+                        cv2.putText(frame, str(round(levelWeightsHumans[hmI][0], 3)), (originFrameX, originFrameY), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)     # Text in black "Human"
+    
+                        # also detect basketball hoop
+                        # detct human inside cropImg_DetectHuman
+                        hmI += 1
+                    
+                        xA, yA, xB, yB = extendSectionSize(x, y, w, h, ballSize, gray.shape, 15)
+            
+                        cropImg_DetectHoop = frame[yA:yB, xA:xB]  
+                        #print ("xxx : ",  x, y, ballSize, gray.shape)
+                        #print (" xA, yA, xB, yB : ",  xA, yA, xB, yB, gray.shape)
+                        hoopGray = cv2.cvtColor(cropImg_DetectHoop, cv2.COLOR_BGR2GRAY)
+                        
+                        hoops, rejectLevelsHoops, levelWeightsHoops = basketHoopCascade.detectMultiScale3(
+                            hoopGray,
+                            scaleFactor=basketHoopParameter.scaleFactor,
+                            minNeighbors=basketHoopParameter.minNeighbors,
+                            minSize=basketHoopParameter.minSize,
+                            flags=cv2.CASCADE_SCALE_IMAGE,
+                            outputRejectLevels=True
+                        )
+                        
+                        
+                        #print ("hoops: ", type(hoops), len(hoops), hoopGray.shape)
+                        hpI = 0
+                        for (hoopX, hoopY, hoopW, hoopH) in hoops:
+                            if levelWeightsHoops[hpI][0] >= 0.1:
+                                originFrameX = hoopX + x if xA != 0 else hoopX
+                                originFrameY = hoopY + y if yA != 0 else hoopY 
+                                cv2.rectangle(frame, (originFrameX, originFrameY), (originFrameX+hoopW, originFrameY+hoopH), (0, 255, 255), 3)       # yellow for basketball hoop
+                                
+                                #cv2.rectangle(frame, (hoopX, hoopY), (hoopX+hoopW, hoopY+hoopH), (0, 255, 255), 3) # yellow for basketball hoop
+                                cv2.putText(frame, str(round(levelWeightsHoops[hpI][0], 3)), (originFrameX, originFrameY), cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 0), 2)     # Text in black "Hoop"
+                                
+                                hpI += 1
+                                
+                                # decide the action of basketball dunk
+                                ballCenter = (x + w/2, y + h/2)
+                                
+                                for (hoopX, hoopY, hoopW, hoopH) in hoops:
+                                    hoopCenter = (hoopX + hoopW/2, hoopY + hoopH/2)
+                                    for (humX, humY, humW, humH) in humans:
+                                        humanCenter = (humX + humW/2, humY + humH/2)
+                                        #if ballCenter[1] > hoopCenter[1] and  hoopCenter[1] > humanCenter[1]:
+                                        if x >= hoopX and y >= hoopY and (x+w) <= (hoopX+hoopW) and (y+h) <= (hoopY+hoopH) and hoopCenter[1] > humanCenter[1]:
+                                            actionDunkEachKFrameCnt +=1
+                                            #print ("actionDunk detected HERE HERE: ", actionDunkEachKFrameCnt)
+                
+                                            if actionDunkEachKFrameCnt >= K*ratioKFrame: 
+                                                actionDunkCnt += 1
+    
+    
+    
+    
 def detectBasketballDunk(videoPath, outputVideoName, fpsRed, reso):
     '''
     detect basketball dunk action every each frame

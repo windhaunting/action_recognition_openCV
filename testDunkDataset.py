@@ -8,8 +8,11 @@ Created on Fri Dec 21 12:00:56 2018
 
 # test the effecct of tradtional opencv on basketball dunk action
 # in a systematical way
-from dunKActionDetectionObjectDectionCV import detectBasketballDunk
+
+#from dunKActionDetectionObjectDectionCV import detectBasketballDunk
 from dunKActionDetectionObjectDectionCV import detectBasketballDunkKFrameFixedWindow
+
+from profilingCommon import ProfileVideoCls
 
 import logging
 import glob
@@ -76,7 +79,7 @@ def readConfigurationResult(inputFile):
      [0.5, 0.5, 0.0, 0.0, 0.0, 0.5, 0.5, 0.1, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 0.5, 0.5, 0.1, 0.0, 0.0, 0.5, 0.5, 0.1, 0.0, 0.0]
 
     '''
-
+    
     fpsLst = []                 # frame rate
     resolutionLst = []          # image size
     sPFTimeLst = []             # second per frame
@@ -84,7 +87,7 @@ def readConfigurationResult(inputFile):
     # get accuracy
     actionDetected = 0
     accuracyEachConfigLst = []
-    
+
     numVideos = 50           # 30   10
     cnt = 0
     with open(inputFile, "rt", encoding='ascii') as inputFile:
@@ -92,6 +95,7 @@ def readConfigurationResult(inputFile):
         
         averageSPF = 0.0
         sumSPF = 0.0
+                
         for row in rows :
             #print (row)
             cnt += 1
@@ -123,10 +127,195 @@ def readConfigurationResult(inputFile):
                 actionDetected = 0
                 
                 cnt = 0
+                
 
     print ("fps, resolution, spf, acc: ",  fpsLst, resolutionLst, sPFTimeLst, accuracyEachConfigLst)
             
     return fpsLst, resolutionLst, sPFTimeLst, accuracyEachConfigLst
+
+
+def readConfigurationResultIntoSequence(inputFile):
+    '''
+    read profile file result into ProfileVideoCls data structure
+    
+    return a list of ProfileVideoCls
+    
+    
+    '''
+
+    profileResultLst = []       #list of ProfileVideoCls
+
+    #fpsLst = []                 # frame rate
+    #resolutionLst = []          # image size
+    #sPFTimeLst = []             # second per frame
+    
+    # get accuracy
+    actionDetected = 0
+    #accuracyEachConfigLst = []
+    
+        
+    #  ['cameraNo', 'frameStartNo', 'resolution', 'frameRate', 'accuracy', 'costSPF']
+
+    modelMethod = "CCV"    # classical computer vision now
+    
+    cameraNo = 1           # currently only 1 to test first
+    frameStartNo = 0
+    
+    numVideos = 50           # 30   10
+    cnt = 0
+    with open(inputFile, "rt", encoding='ascii') as inputFile:
+        rows = csv.reader(inputFile)
+        
+        averageSPF = 0.0
+        sumSPF = 0.0
+        
+        proClsObj = ProfileVideoCls()         # profile result class
+
+        for row in rows :
+            #print (row)
+            cnt += 1
+            if cnt == 1:
+                #numFrame = row[2].split(':')[1]
+                frameRate = row[3].split(':')[1].strip()
+                resoPixels = row[4].split(':')[1].strip()
+                #totalTime = row[5].split(':')[1]
+                #fpsLst.append(frameRate)
+                #resolutionLst.append(resoPixels)
+                
+                proClsObj.cameraNo = cameraNo
+                proClsObj.frameStartNo = frameStartNo
+                proClsObj.frameRate = frameRate
+                proClsObj.resolution = resoPixels
+                proClsObj.modelMethod = modelMethod
+                
+            secPerFrame = float(row[6].split(':')[1].strip())
+            #actionDunkCnt = row[7].split(':')[1]    
+            sumSPF += secPerFrame
+            
+            ActionTrueFalse = row[8].split(':')[1].strip()
+            
+            if ActionTrueFalse == "True":
+                actionDetected += 1
+                
+                
+            if cnt == numVideos:
+                averageSPF = round(sumSPF/numVideos, 3)
+                #sPFTimeLst.append(averageSPF)
+                proClsObj.costSPF = averageSPF
+                
+                accuracy = actionDetected/numVideos
+                #accuracyEachConfigLst.append(accuracy) 
+                proClsObj.accuracy = accuracy
+                
+                profileResultLst.append(proClsObj)
+                
+                proClsObj = ProfileVideoCls()         # reinitialize
+                
+                sumSPF = 0.0  
+                actionDetected = 0  # for the next video clips
+                cnt = 0
+                
+                frameStartNo += 1
+
+            
+    return profileResultLst
+
+
+
+def readMultipleConfigurationResultIntoSequence(inputFile1, inputFile2):
+    '''
+    read profile file1 from CCV , file2 from DNN result into ProfileVideoCls data structure
+    
+    return a list of ProfileVideoCls
+    
+    
+    '''
+
+    profileResultLst = []       #list of ProfileVideoCls
+
+    #inputFileLst = [inputFile1, inputFile2]
+    
+    fileInd = 0
+    
+    while(fileInd < 2):           # 2 files
+        
+        
+        # get accuracy
+        actionDetected = 0
+        #accuracyEachConfigLst = []
+        
+        #  ['cameraNo', 'frameStartNo', 'resolution', 'frameRate', 'accuracy', 'costSPF']
+    
+        if fileInd == 0:
+            modelMethod = "CCV"    # classical computer vision now
+            inputFile = inputFile1
+        else:
+            modelMethod = "DNN"    # classical computer vision now
+            inputFile = inputFile2
+            
+        cameraNo = 1           # currently only 1 to test first
+        frameStartNo = 0
+        
+        numVideos = 50               # 30   10
+        cnt = 0
+        
+        
+        with open(inputFile, "rt", encoding='ascii') as inputFile:
+            rows = csv.reader(inputFile)
+            
+            averageSPF = 0.0
+            sumSPF = 0.0
+            
+            proClsObj = ProfileVideoCls()         # profile result class
+    
+            for row in rows :
+                #print (row)
+                cnt += 1
+                if cnt == 1:
+                    #numFrame = row[2].split(':')[1]
+                    frameRate = row[3].split(':')[1].strip()
+                    resoPixels = row[4].split(':')[1].strip()
+                    #totalTime = row[5].split(':')[1]
+                    #fpsLst.append(frameRate)
+                    #resolutionLst.append(resoPixels)
+                    
+                    proClsObj.cameraNo = cameraNo
+                    proClsObj.frameStartNo = frameStartNo
+                    proClsObj.frameRate = frameRate
+                    proClsObj.resolution = resoPixels
+                    proClsObj.modelMethod = modelMethod
+                        
+                secPerFrame = float(row[6].split(':')[1].strip())
+                #actionDunkCnt = row[7].split(':')[1]    
+                sumSPF += secPerFrame
+                
+                ActionTrueFalse = row[8].split(':')[1].strip()
+                
+                if ActionTrueFalse == "True":
+                    actionDetected += 1
+                    
+                    
+                if cnt == numVideos:
+                    averageSPF = round(sumSPF/numVideos, 3)
+                    #sPFTimeLst.append(averageSPF)
+                    proClsObj.costSPF = averageSPF
+                    
+                    accuracy = actionDetected/numVideos
+                    #accuracyEachConfigLst.append(accuracy) 
+                    proClsObj.accuracy = accuracy
+                    
+                    profileResultLst.append(proClsObj)
+                    
+                    proClsObj = ProfileVideoCls()         # reinitialize
+                    
+                    sumSPF = 0.0  
+                    actionDetected = 0  # for the next video clips
+                    cnt = 0
+                    
+                    frameStartNo += 1
+                    
+        fileInd += 1
+    return profileResultLst
 
 
 def plotConfigImpact(inputFile):
@@ -189,7 +378,7 @@ def plotConfigImpact(inputFile):
     plt.figure(1)
     
     for i in range(0, len(xSPFAllResoLsts)):            # len(xSPFAllResoLsts)
-        plt.plot(xSPFAllResoLsts[i][::-1], yAccAllResoLsts[i][::-1], 'o-')
+        plt.plot(xSPFAllResoLsts[i][::-1], yAccAllResoLsts[i][::-1], 'o')         #'o-'
         
     plt.title('Impact of frame rates: ' + '[1, 2, 5, 10, 25]', size=16)
     plt.xlabel('CPU cost--Second Per Frame ', size=16)
@@ -203,9 +392,8 @@ def plotConfigImpact(inputFile):
     yAccAllResoLsts = []           # Accu
     
     resNum = 0
-    
     while (resNum < len(resolutionLst)):
-        start = resNum         # fps of 25  framerate start indexd
+        start = resNum              # fps of 25  framerate start indexd
         xResoLst = []
         yAccLst = []
         for i in range(start, knobNum+start, 1):
@@ -222,7 +410,8 @@ def plotConfigImpact(inputFile):
         
     plt.figure(2)
     
-    plt.plot(xResoLst[::-1], yAccLst[::-1], 'o-')
+    for i in range(0, len(xResoAllResoLsts)):            # len(xResoAllResoLsts)
+        plt.plot(xResoAllResoLsts[i][::-1], yAccAllResoLsts[i][::-1], 'o')
     plt.title('Impact of resolutions: ' + '[240, 360, 480, 600, 720]', size=16)      # [240, 360, 480, 600, 720]
     plt.xlabel('CPU cost--Second Per Frame ', size=16)
     plt.ylabel('Accuracy', size=16)
@@ -230,6 +419,31 @@ def plotConfigImpact(inputFile):
     
     #plt.show()
 
-              
+def test1(inputFile1, inputFile2):
+     # test
+    #inputFile1 = '../output-Kinetics/testVideo01_trimmed_50videos/testVideo01_trimmed_50videos_test_log.csv'
+    #profileResultLst = readConfigurationResultIntoSequence(inputFile1)
+    
+    profileResultLst = readMultipleConfigurationResultIntoSequence(inputFile1, inputFile2)
+
+    for i, proObj in enumerate(profileResultLst):
+        print ("prob res: ", proObj.cameraNo, proObj.frameStartNo, proObj.resolution, 
+               proObj.frameRate, proObj.modelMethod, proObj.accuracy, proObj.costSPF)
+        
+    #  ['cameraNo', 'frameStartNo', 'resolution', 'frameRate', 'accuracy', 'costSPF']
+
+    '''
+    # test to sort by an element in  costSPF
+    profileResLstSortAcc = sorted(profileResultLst, key=lambda profCls: profCls.accuracy, reverse=True)
+    for i, proObj in enumerate(profileResLstSortAcc):
+        print ("prob res sorted: ", proObj.cameraNo, proObj.frameStartNo, proObj.resolution, 
+               proObj.frameRate, proObj.modelMethod, proObj.accuracy, proObj.costSPF)
+    
+    '''
+    
 if __name__== "__main__":
     exec(sys.argv[1])
+    
+   
+    
+        

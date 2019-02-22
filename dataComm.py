@@ -95,7 +95,40 @@ def extractVideoFrames(inputVideoPath, outFramesPath, saveFileOrDict):
     elif saveFileOrDict == "dict":
         return imageDict
     
- 
+def changeFrameRate(inputVideoPath, saveFileOrDict):
+    cap = readVideo(inputVideoPath)
+    
+    if (not cap.isOpened):
+        print ('cam not opened: %s ', cap.isOpened())
+        return 
+
+    FPS = cap.get(cv2.CAP_PROP_FPS)
+    WIDTH = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    HEIGHT = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    NUMFRAMES = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    
+    print('cam stat: ', FPS, WIDTH, HEIGHT, NUMFRAMES)
+    
+    count = 1
+
+    while True:
+      
+      ret, img = cap.read()
+
+      if not ret:
+          print ("no frame exit here 1, total frames ")
+          break
+      
+      # test resize resolution
+      
+      img = cv2.resize(img, (300, 300));
+      if saveFileOrDict == "file":
+          cv2.imwrite(os.path.join(outFramesPath, '%d.jpg') % count, img)     # save frame as JPEG file
+      elif saveFileOrDict == "dict":
+          imageDict[count] = img
+
+      count += 1
+      
 
 if __name__== "__main__":
 
