@@ -76,7 +76,7 @@ def extendSectionSize(x,y, w, h, ballSize, frameShape, extendRatio):
       
 def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, reso, K, ratioKFrame):
     '''
-    detect basketball dunk action
+    profiling of detect basketball dunk action 
     K: FixedWindow  every K frame together to decide an action;  if they are all detected   
     fpsRed:  fps reduced
     resolutionPx:  reduced resolution
@@ -110,7 +110,6 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     
 
     #print ('cam stat: %s, %s, %s, %s ', fps, WIDTH, HEIGHT, NUMFRAMES)
-    
 
 
     # outputVideoName =  "UCF101_v_longJump_g01_c01_out.avi"   # "UCF101_v_BasketballDunk_g01_c01_out.avi"  # "humanRunning_JHMDB_output_001.avi"
@@ -309,12 +308,14 @@ def detectBasketballDunkKFrameFixedWindow(videoPath, outputVideoName, fpsRed, re
     return actionDunkCnt, elapsedTime, realFrameNum, NUMFRAMES
 
 
-def detectBasketballDunkKFrameCVV(kFrameDict):
+def detectBasketballDunkKFrameCVV(kFrameDict, ratioKFrame):
     '''
-    K frame to detect the basketball dunk action
-    input: k frames dict
-    
+    K frame to detect the basketball dunk action existing or not
+    input: k frames dict;  dict[0], dict[1].... dict[K] = frame matrix
+           ratioKFrame: how many frames/K are effective for counting
     '''
+    K = len(kFrameDict)
+     
     basketballModelPath = "../inputData/kinetics600/basketBallDetectionTrain/basketballTrainedModel/cascade.xml"
     humanModelPath = "../model/haarcascade_upperbody.xml"       # haarcascade_fullbody.xml   haarcascade_upperbody.xml
     basketHoopModelPath = "../inputData/kinetics600/basketballHoopTrain/basketballHoopTrainedModel/cascade.xml"
@@ -330,7 +331,9 @@ def detectBasketballDunkKFrameCVV(kFrameDict):
     basketHoopCascade = cv2.CascadeClassifier(basketHoopParameter.modelPath)
     
     actionDunkEachKFrameCnt = 0
+    actionDunkCnt = 0
     
+    startTime = time.time()
     for cnt, frame in kFrameDict:
         x = 1
         
@@ -427,7 +430,7 @@ def detectBasketballDunkKFrameCVV(kFrameDict):
                                 hpI += 1
                                 
                                 # decide the action of basketball dunk
-                                ballCenter = (x + w/2, y + h/2)
+                                #ballCenter = (x + w/2, y + h/2)
                                 
                                 for (hoopX, hoopY, hoopW, hoopH) in hoops:
                                     hoopCenter = (hoopX + hoopW/2, hoopY + hoopH/2)
@@ -441,7 +444,13 @@ def detectBasketballDunkKFrameCVV(kFrameDict):
                                             if actionDunkEachKFrameCnt >= K*ratioKFrame: 
                                                 actionDunkCnt += 1
     
+    print ("actionDunk count: ", actionDunkCnt)
     
+    elapsedTime = time.time() - startTime
+    #logger.info("actionDunk count %s ;  elapsedTime: %s s", actionDunkCnt, elapsedTime)
+    
+    
+    return actionDunkCnt, elapsedTime
     
     
 def detectBasketballDunk(videoPath, outputVideoName, fpsRed, reso):
