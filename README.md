@@ -55,7 +55,7 @@ For testing, HOGPH vector is generated for each sample video and SVM used for pr
 Method-2 : Video Matching using PCA and SVD
 
 
-Results:
+## Results:
 
 Method 1 does not take into account the motion information and not suitable for large dataset in videos.
 
