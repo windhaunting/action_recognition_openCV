@@ -5,8 +5,8 @@ The basketball dunk action recognition is to detect whether a action in a image 
 
 - [Installation](#installation)
 - [Dataset](#dataset)
-- [Algorithm Outline](#algorithm-flow)
-- [Result](#result)
+- [Algorithm Overview](#algorithm-overflow)
+- [Results](#results)
 
 ## Installation
 
@@ -15,27 +15,12 @@ The basketball dunk action recognition is to detect whether a action in a image 
 - Opencv 3.4 or more
 - Sklearn
 
-#Datasets
+## Datasets
 
 used for training and testing:
 
 - KTH human activity - Boxing, Hand clapping, Running, Walking
 - Weizmann - Bending, One hand waving
-
-
-Methodology:
-------------
-Method-1 : 
-HOG feature vecots from n consecutive video frames are analyzed to generate HOGPH (history of HOG features over past frames). HOGPH feature vectors are used to train the multi-class SVM classifier model for all activities.
-For testing, HOGPH vector is generated for each sample video and SVM used for prediction of the class.
-
-Method-2 : Video Matching using PCA and SVD
-
-Results:
---------
-Method 1 does not account for motion information and not suitable for large dataset.
-Method 2, on the other hand, is easy to implement but time consuming. Method 2 accuracy found out to be around 63%. 
-           
 
 
 ## Algorithm Overview
