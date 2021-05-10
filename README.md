@@ -5,7 +5,7 @@ The basketball dunk action recognition is to detect whether a action in a image 
 
 - [Installation](#installation)
 - [Dataset](#dataset)
-- [Algorithm Overview](#algorithm-overflow)
+- [Algorithm Overview](#algorithm-overview)
 - [Results](#results)
 
 ## Installation
